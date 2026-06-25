@@ -24,7 +24,16 @@ const TARGET_AUTHORS = {
   plato: { name: '柏拉图', nameEn: 'Plato', quotableName: 'Plato', school: '理性主义', era: '428-348 BC', originalLang: 'grc', core: '理念论、洞穴比喻、哲人王、灵魂三分', style: '追问本质。我们看到的只是墙上的影子，真正的实在在洞穴之外。' },
   kant: { name: '康德', nameEn: 'Immanuel Kant', quotableName: 'Immanuel Kant', school: '理性主义', era: '1724-1804', originalLang: 'de', core: '道德律令、物自体、二律背反、启蒙即敢于运用理性', style: '严谨深刻。头顶的星空和心中的道德律——自由不在随心所欲，而在自我立法。' },
   schopenhauer: { name: '叔本华', nameEn: 'Arthur Schopenhauer', quotableName: 'Arthur Schopenhauer', school: '理性主义', era: '1788-1860', originalLang: 'de', core: '意志即痛苦、表象世界、艺术救赎、禁欲解脱', style: '悲观而诚实。生命即欲望的钟摆——在痛若与无聊之间来回摆动。' },
-  buddha: { name: '佛陀', nameEn: 'The Buddha', quotableName: 'The Buddha', school: '超越视角', era: '5th century BC', originalLang: 'pi', core: '四圣谛、八正道、缘起性空、离苦得乐', style: '超然慈悲。痛苦源于执取——放下不是放弃，而是从根源上看见无我的实相。' }
+  buddha: { name: '佛陀', nameEn: 'The Buddha', quotableName: 'The Buddha', school: '超越视角', era: '5th century BC', originalLang: 'pi', core: '四圣谛、八正道、缘起性空、离苦得乐', style: '超然慈悲。痛苦源于执取——放下不是放弃，而是从根源上看见无我的实相。' },
+  aristotle: { name: '亚里士多德', nameEn: 'Aristotle', quotableName: 'Aristotle', school: '古典智慧', era: '384-322 BC', originalLang: 'grc', core: '中庸之道、实践智慧(phronesis)、幸福(eudaimonia)、美德伦理', style: '理性而实用。幸福不是感觉，而是一种活动——灵魂合乎德性的实现。' },
+  zhuangzi: { name: '庄子', nameEn: 'Zhuangzi', quotableName: null, school: '东方智慧', era: '369-286 BC', originalLang: 'zh', core: '逍遥游、齐物论、无用之用、庖丁解牛', style: '飘逸自由。以最浪漫的方式瓦解所有执念——与天地精神相往来。' },
+  wangyangming: { name: '王阳明', nameEn: 'Wang Yangming', quotableName: null, school: '东方智慧', era: '1472-1529', originalLang: 'zh', core: '知行合一、致良知、心即理、事上磨练', style: '刚健笃实。知道的做不到，就是不知道。真理不在书上，在你心里。' },
+  wittgenstein: { name: '维特根斯坦', nameEn: 'Ludwig Wittgenstein', quotableName: null, school: '语言/分析', era: '1889-1951', originalLang: 'de', core: '语言游戏、不可言说、生活形式、哲学即治疗', style: '极度诚实。对他能够说的就说清楚，对不能说的就必须保持沉默。' },
+  descartes: { name: '笛卡尔', nameEn: 'René Descartes', quotableName: 'René Descartes', school: '理性主义', era: '1596-1650', originalLang: 'fr', core: '我思故我在、普遍怀疑、身心二元、方法论', style: '冷静精确。彻底的怀疑反而是找到确定性的唯一道路。' },
+  spinoza: { name: '斯宾诺莎', nameEn: 'Baruch Spinoza', quotableName: null, school: '理性主义', era: '1632-1677', originalLang: 'la', core: '神即自然、情感几何学、自由即理解必然', style: '宁静如数学。不要哭，不要笑，要理解——用几何的冷静解剖情感。' },
+  rousseau: { name: '卢梭', nameEn: 'Jean-Jacques Rousseau', quotableName: 'Jean-Jacques Rousseau', school: '启蒙/浪漫', era: '1712-1778', originalLang: 'fr', core: '社会契约、人生而自由却无往不在枷锁中、自然状态', style: '热情真挚。文明使人虚伪，回归自然才能找回真实的自己。' },
+  foucault: { name: '福柯', nameEn: 'Michel Foucault', quotableName: null, school: '后现代/批判', era: '1926-1984', originalLang: 'fr', core: '权力/知识、规训社会、疯癫与文明、自我技术', style: '冷峻锐利。权力的可怕之处不在于它禁止，而在于它让我们以为自己是自由的。' },
+  kierkegaard: { name: '克尔凯郭尔', nameEn: 'Søren Kierkegaard', quotableName: 'Søren Kierkegaard', school: '存在主义', era: '1813-1855', originalLang: 'da', core: '信仰之跃、焦虑即自由、人生三阶段、孤独个体', style: '炽热虔诚。焦虑不是病，是你面对无限可能性时的眩晕——那是自由的门槛。' }
 };
 
 // 手动语录：完全手动补充的 + 补充 Quotable 太少的
@@ -64,6 +73,103 @@ const MANUAL_QUOTES = {
     { content: '人是社会关系的总和。人的本质不是单个人所固有的抽象物。', original: 'Das menschliche Wesen ist kein dem einzelnen Individuum innewohnendes Abstraktum. In seiner Wirklichkeit ist es das Ensemble der gesellschaftlichen Verhältnisse.', tags: ['人', '社会'] },
     { content: '一个幽灵，共产主义的幽灵，在欧洲游荡。', original: 'Ein Gespenst geht um in Europa — das Gespenst des Kommunismus.', tags: ['共产主义', '革命'] },
     { content: '在资本主义生产的条件下，工人生产的越多，他自己就越贫乏。', original: 'Der Arbeiter wird um so ärmer, je mehr Reichtum er produziert.', tags: ['异化', '劳动'] }
+  ],
+  zhuangzi: [
+    { content: '天地与我并生，而万物与我为一。', original: '天地与我并生，而万物与我为一。', tags: ['齐物', '境界', '自然'] },
+    { content: '子非鱼，安知鱼之乐？', original: '子非鱼，安知鱼之乐？', tags: ['认知', '局限'] },
+    { content: '无用之用，方为大用。', original: '无用之用，方为大用。', tags: ['价值', '功利'] },
+    { content: '至人无己，神人无功，圣人无名。', original: '至人无己，神人无功，圣人无名。', tags: ['自由', '自我'] },
+    { content: '吾生也有涯，而知也无涯。以有涯随无涯，殆已。', original: '吾生也有涯，而知也无涯。以有涯随无涯，殆已。', tags: ['知识', '限度', '焦虑'] },
+    { content: '相濡以沫，不如相忘于江湖。', original: '相濡以沫，不如相忘于江湖。', tags: ['关系', '自由', '爱情'] },
+    { content: '举世誉之而不加劝，举世非之而不加沮。', original: '举世誉之而不加劝，举世非之而不加沮。', tags: ['独立', '外界评价'] },
+    { content: '大知闲闲，小知间间。大言炎炎，小言詹詹。', original: '大知闲闲，小知间间。大言炎炎，小言詹詹。', tags: ['智慧', '焦虑'] },
+    { content: '知其不可奈何而安之若命，德之至也。', original: '知其不可奈何而安之若命，德之至也。', tags: ['接受', '命运', '挫折'] },
+    { content: '独与天地精神相往来。', original: '独与天地精神相往来。', tags: ['孤独', '自由', '精神'] },
+    { content: '井蛙不可以语于海者，拘于虚也。', original: '井蛙不可以语于海者，拘于虚也。', tags: ['局限', '认知'] },
+    { content: '人皆知有用之用，而莫知无用之用也。', original: '人皆知有用之用，而莫知无用之用也。', tags: ['价值', '功利', '内卷'] }
+  ],
+  wangyangming: [
+    { content: '知行合一：知而不行，只是未知。', original: '知行合一：知而不行，只是未知。', tags: ['行动', '认知', '自律'] },
+    { content: '破山中贼易，破心中贼难。', original: '破山中贼易，破心中贼难。', tags: ['自我', '成长'] },
+    { content: '心即理也。天下又有心外之事、心外之理乎？', original: '心即理也。天下又有心外之事、心外之理乎？', tags: ['真理', '自我'] },
+    { content: '此心不动，随机而动。', original: '此心不动，随机而动。', tags: ['冷静', '决策', '焦虑'] },
+    { content: '人须在事上磨，方能立得住。', original: '人须在事上磨，方能立得住。', tags: ['实践', '成长', '挫折'] },
+    { content: '志不立，天下无可成之事。', original: '志不立，天下无可成之事。', tags: ['志向', '成功', '迷茫'] },
+    { content: '种树者必培其根，种德者必养其心。', original: '种树者必培其根，种德者必养其心。', tags: ['修养', '成长'] },
+    { content: '良知是自家的准则。', original: '良知是自家的准则。', tags: ['道德', '判断'] },
+    { content: '持志如心痛。一心在痛上，岂有工夫说闲话、管闲事？', original: '持志如心痛。一心在痛上，岂有工夫说闲话、管闲事？', tags: ['专注', '志向'] },
+    { content: '悔悟是去病之药，然以改之为贵。', original: '悔悟是去病之药，然以改之为贵。', tags: ['后悔', '改变'] }
+  ],
+  wittgenstein: [
+    { content: '对于不可言说的东西，我们必须保持沉默。', original: 'Wovon man nicht sprechen kann, darüber muss man schweigen.', tags: ['语言', '界限'] },
+    { content: '语言的界限就是我的世界的界限。', original: 'Die Grenzen meiner Sprache bedeuten die Grenzen meiner Welt.', tags: ['认知', '局限'] },
+    { content: '世界的意义必定在世界之外。', original: 'Der Sinn der Welt muss außerhalb ihrer liegen.', tags: ['意义', '超越'] },
+    { content: '哲学是一场战斗——对抗语言对我们的理智的蛊惑。', original: 'Die Philosophie ist ein Kampf gegen die Verhexung unseres Verstandes durch die Mittel unserer Sprache.', tags: ['哲学', '语言'] },
+    { content: '不要把任何东西当作理所当然——这是一种哲学态度。', original: 'Nimm nichts als selbstverständlich hin.', tags: ['思考', '习惯'] },
+    { content: '如果一个问题可以提出来，它也可以被回答。', original: 'Wenn eine Frage sich stellen lässt, so kann sie auch beantwortet werden.', tags: ['问题', '解决'] },
+    { content: '说清楚能说的，说不清楚的，就让它在那里——这就是诚实。', original: 'Man muss das, was sich sagen lässt, klar sagen.', tags: ['诚实', '认知'] },
+    { content: '真正的生活不在时间里，而在当下。', original: 'Wenn man unter Ewigkeit nicht unendliche Zeitdauer, sondern Unzeitlichkeit versteht, dann lebt der ewig, der in der Gegenwart lebt.', tags: ['当下', '时间', '焦虑'] }
+  ],
+  spinoza: [
+    { content: '不要哭，不要笑，要理解。', original: 'Non ridere, non lugere, neque detestari, sed intelligere.', tags: ['情感', '理性', '冷静'] },
+    { content: '自由就是对必然性的认识。', original: 'Libertas est cognitionem necessitatis.', tags: ['自由', '认识'] },
+    { content: '幸福不是德性的报酬，而是德性本身。', original: 'Beatitudo non est virtutis praemium, sed ipsa virtus.', tags: ['幸福', '道德'] },
+    { content: '只要心灵按照理性的引导来理解事物，它就会同等地受到所有事物的影响——不管它是过去、现在还是未来。', original: 'Quatenus mens ex rationis dictamine res concipit, aeque afficitur, sive idea sit futurae vel praeteritae rei, sive praesentis.', tags: ['时间', '理性', '焦虑'] },
+    { content: '上帝即自然——一切存在的东西都在上帝之中。', original: 'Deus sive Natura.', tags: ['自然', '整体'] },
+    { content: '一种情感只有通过一种更强的情感才能被克服。', original: 'Affectus nec coerceri nec tolli potest, nisi per affectum contrarium et fortiorem.', tags: ['情感', '改变'] },
+    { content: '心灵的最高善就是关于上帝的知识。', original: 'Mentis summum bonum est Dei cognitio.', tags: ['知识', '幸福'] },
+    { content: '只要人是自然的一部分，人就受制于情感。', original: 'Homines eatenus perturbantur, quatenus sunt pars naturae.', tags: ['人性', '情感'] },
+    { content: '和平不是没有战争，而是一种来自灵魂力量的德性。', original: 'Pax non est privatio belli, sed virtus quae ex animi fortitudine oritur.', tags: ['和平', '内心'] }
+  ],
+  foucault: [
+    { content: '权力不是某个人或某群人所拥有的东西，而是弥散在整个社会中的关系网络。', original: 'Le pouvoir, ce n\'est pas une institution, et ce n\'est pas une structure, ce n\'est pas une certaine puissance dont certains seraient dotés.', tags: ['权力', '社会'] },
+    { content: '知识就是权力，权力生产知识。', original: 'Pouvoir et savoir s\'impliquent directement l\'un l\'autre.', tags: ['知识', '权力'] },
+    { content: '疯狂不是一种自然现象，而是文明建构的产物。', original: 'La folie n\'existe que dans une société.', tags: ['疯狂', '社会', '认知'] },
+    { content: '我不关心我是谁——我关心的是我拒绝成为谁。', original: 'Je ne suis pas là pour dire qui je suis.', tags: ['自我', '自由'] },
+    { content: '重要的不是过去，而是如何与过去决裂。', original: 'Ce qui est important, ce n\'est pas de regarder en arrière.', tags: ['过去', '改变'] },
+    { content: '规训社会的终极目标不是惩罚你，而是使你成为你自己的看守。', original: 'Le surveillant, c\'est vous-même.', tags: ['规训', '自我', '内卷'] },
+    { content: '哪里有权力的关系，哪里就有抵抗的可能。', original: 'Là où il y a pouvoir, il y a résistance.', tags: ['权力', '反抗', '行动'] },
+    { content: '人终将被抹去，如同海边沙滩上的一张脸。', original: 'L\'homme s\'effacerait, comme à la limite de la mer un visage de sable.', tags: ['死亡', '意义'] }
+  ],
+  kierkegaard: [
+    { content: '焦虑是自由的眩晕——当灵魂凝视可能性之深渊时产生的眩晕。', original: 'Angest er Frihedens Svimmelhed, der opstaar idet Aanden vil sætte Syntesen.', tags: ['焦虑', '自由', '选择'] },
+    { content: '生命只能向后理解，但必须向前生活。', original: 'Livet skal forstås baglæns, men må leves forlæns.', tags: ['时间', '生活', '理解'] },
+    { content: '敢于失去自己的立足之地，才是真正的信仰之跃。', original: 'At turde er at miste fodfæstet et øjeblik.', tags: ['勇气', '信念', '改变'] },
+    { content: '人群就是谎言。', original: 'Mængden er Usandheden.', tags: ['孤独', '个体', '社会'] },
+    { content: '最普遍的绝望是不愿成为自己。但最深层次的绝望是执意要成为他人。', original: 'Fortvivlelse er ikke at ville være sig selv.', tags: ['绝望', '自我', '比较'] },
+    { content: '结婚你后悔，不结婚你也后悔——这就是人生的荒谬与幽默。', original: 'Gift dig, og du vil fortryde det; gift dig ikke, og du vil også fortryde det.', tags: ['选择', '后悔', '婚姻'] },
+    { content: '焦虑是自由的学校——焦虑越深，人格越伟大。', original: 'Jo mere udpræget Angest, jo større Menneske.', tags: ['焦虑', '成长', '自由'] },
+    { content: '信仰恰恰是对客观不确定性的拥抱。', original: 'Troen er netop den objektive Uvished.', tags: ['信念', '不确定', '勇气'] }
+  ],
+  aristotle: [
+    { content: '幸福是灵魂合乎德性的实现活动。', original: 'Eudaimonia est animi actio quaedam secundum perfectam virtutem.', tags: ['幸福', '道德', '行动'] },
+    { content: '我们反复做的事造就了我们。卓越不是一种行为，而是一种习惯。', original: 'We are what we repeatedly do. Excellence, then, is not an act, but a habit.', tags: ['习惯', '卓越', '自律'] },
+    { content: '认识你自己是所有智慧的开端。', original: 'Knowing yourself is the beginning of all wisdom.', tags: ['自我', '智慧'] },
+    { content: '法律是免于激情的理性。', original: 'Law is reason free from passion.', tags: ['理性', '情感', '法律'] },
+    { content: '朋友是住在两个身体里的同一个灵魂。', original: 'A friend is one soul inhabiting two bodies.', tags: ['友谊', '爱情'] },
+    { content: '教育的根是苦的，但果实是甜的。', original: 'The roots of education are bitter, but the fruit is sweet.', tags: ['教育', '成长', '坚持'] },
+    { content: '勇敢是中庸——在懦弱和鲁莽之间。', original: 'Courage is the mean between cowardice and rashness.', tags: ['勇气', '平衡'] },
+    { content: '人是天生的政治动物。', original: 'Man is by nature a political animal.', tags: ['政治', '社会', '人性'] },
+    { content: '智者追求的不是快乐，而是免于痛苦。', original: 'The wise man does not seek pleasure, but freedom from pain.', tags: ['智慧', '痛苦', '幸福'] },
+    { content: '没有行动的思考是空洞的，没有思考的行动是盲目的。', original: 'Thought without action is empty; action without thought is blind.', tags: ['行动', '思考'] }
+  ],
+  descartes: [
+    { content: '我思故我在。', original: 'Je pense, donc je suis.', tags: ['存在', '思考', '确定性'] },
+    { content: '把每个困难分解为尽可能多的小部分来解决。', original: 'Diviser chacune des difficultés en autant de parcelles qu\'il se pourrait.', tags: ['方法', '解决', '焦虑'] },
+    { content: '普遍的怀疑是找到确定性唯一道路。', original: 'Le doute est le commencement de la sagesse.', tags: ['怀疑', '真理', '思考'] },
+    { content: '除了我们自己的思想，没有任何东西完全在我们的控制之中。', original: 'Il n\'y a rien qui soit entièrement en notre pouvoir que nos pensées.', tags: ['控制', '斯多葛', '焦虑'] },
+    { content: '读一本好书，就是和许多高尚的人谈话。', original: 'La lecture de tous les bons livres est comme une conversation avec les plus honnêtes gens des siècles passés.', tags: ['阅读', '智慧'] },
+    { content: '感官有时会欺骗我们，但理性不会。', original: 'Les sens nous trompent quelquefois.', tags: ['认知', '理性'] },
+    { content: '征服自我比征服世界更难。', original: 'Il n\'est pas suffisant d\'avoir l\'esprit bon, le principal est de l\'appliquer bien.', tags: ['自我', '自律'] }
+  ],
+  rousseau: [
+    { content: '人生而自由，却无往不在枷锁之中。', original: 'L\'homme est né libre, et partout il est dans les fers.', tags: ['自由', '社会', '文明'] },
+    { content: '忍耐是痛苦的，但它的果实是甜的。', original: 'La patience est amère, mais son fruit est doux.', tags: ['忍耐', '成长', '坚持'] },
+    { content: '自然是诚实的，社会是虚伪的。', original: 'La nature a fait l\'homme heureux et bon, mais la société le déprave et le rend misérable.', tags: ['自然', '社会', '真实'] },
+    { content: '真正的幸福不是减少欲望，而是增加能力。', original: 'Le bonheur n\'est pas de diminuer ses désirs, mais d\'augmenter sa puissance.', tags: ['幸福', '欲望', '成长'] },
+    { content: '我不比别人好，但我和别人不一样。', original: 'Si je ne vaux pas mieux, au moins je suis autre.', tags: ['自我', '独特', '比较'] },
+    { content: '青春是学习智慧的季节，老年是实践智慧的季节。', original: 'La jeunesse est le temps d\'étudier la sagesse, la vieillesse est le temps de la pratiquer.', tags: ['时间', '智慧', '成长'] },
+    { content: '人是善良的，是社会使他变坏。', original: 'L\'homme est naturellement bon, c\'est la société qui le corrompt.', tags: ['人性', '社会'] }
   ],
   engels: [
     { content: '劳动创造了人本身。', original: 'Die Arbeit hat den Menschen selbst geschaffen.', tags: ['劳动', '人类'] },
