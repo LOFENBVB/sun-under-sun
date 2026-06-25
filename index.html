@@ -380,7 +380,7 @@ footer a:hover{color:rgba(255,255,255,.4)}
 </div>
 
 <footer>
-  <span id="version-number">v1.3</span>
+  <span id="version-number">v1.4</span>
   <a href="#" id="key-indicator" class="key-indicator" onclick="event.preventDefault();showKeySetup()">⚡ Key 未设置</a>
 </footer>
 
@@ -606,7 +606,7 @@ function hideAll(){
 // ===== SYSTEM PROMPT (D-Mode) =====
 function buildSystemPrompt(){
   const profiles=Object.entries(PHILOSOPHERS).map(([k,a])=>{
-    const lang=a.originalLang==='de'?'德':a.originalLang==='fr'?'法':a.originalLang==='la':'拉':a.originalLang==='grc'?'古希腊':a.originalLang==='pi'?'巴利':'中';
+    const lang=a.originalLang==='de'?'德':a.originalLang==='fr'?'法':a.originalLang==='la'?'拉':(a.originalLang==='grc'?'古希腊':(a.originalLang==='pi'?'巴利':'中'));
     const sq=a.quotes.slice(0,3).map(q=>`"${q.content}"`).join(' | ');
     const works=a.works?`｜著作：${a.works}`:'';
     const method=a.method?`｜分析方式：${a.method}`:'';
