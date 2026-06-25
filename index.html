@@ -160,6 +160,10 @@ body::before{
 #api-key-input:focus{border-color:var(--border-focus);box-shadow:0 0 30px var(--gold-glow)}
 #save-key{padding:10px 32px;background:rgba(200,170,120,.08);border:1px solid rgba(200,170,120,.2);border-radius:8px;color:var(--gold-dim);font-family:var(--font);font-size:14px;cursor:pointer;transition:all .3s}
 #save-key:hover{background:rgba(200,170,120,.15);border-color:rgba(200,170,120,.4);color:var(--gold)}
+#provider-tabs{display:flex;gap:8px;margin-bottom:16px;justify-content:center}
+.prov-tab{padding:6px 16px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:16px;color:var(--text-dim);font-family:var(--font);font-size:12px;cursor:pointer;transition:all .3s}
+.prov-tab:hover{border-color:rgba(210,185,140,.3);color:var(--gold-dim)}
+.prov-tab.active{background:rgba(210,185,140,.1);border-color:rgba(210,185,140,.3);color:var(--gold-dim)}
 
 /* ===== FOOTER ===== */
 footer{position:fixed;bottom:16px;right:24px;z-index:10;display:flex;gap:20px;align-items:center}
@@ -318,8 +322,13 @@ footer a:hover{color:rgba(255,255,255,.4)}
   <!-- ===== KEY SETUP ===== -->
   <div id="key-setup" class="page hidden">
     <div id="key-setup-content">
-      <h2>设置 DeepSeek API Key</h2>
-      <p>你的 Key 仅存储在本地浏览器中，只会发送到 api.deepseek.com。<br>前往 <a href="https://platform.deepseek.com" target="_blank">platform.deepseek.com</a> 获取。</p>
+      <h2>设置 API Key</h2>
+      <div id="provider-tabs">
+        <button class="prov-tab active" data-prov="deepseek">DeepSeek</button>
+        <button class="prov-tab" data-prov="openai">OpenAI</button>
+        <button class="prov-tab" data-prov="anthropic">Claude</button>
+      </div>
+      <p id="key-desc">Key 仅存本地浏览器，只发往所选 API。<br>前往 <a id="key-link" href="https://platform.deepseek.com" target="_blank">platform.deepseek.com</a> 获取。</p>
       <input id="api-key-input" type="password" placeholder="sk-...">
       <button id="save-key">保存</button>
       <button id="clear-key" style="margin-top:8px;padding:6px 16px;background:transparent;border:none;color:rgba(255,255,255,.12);font-family:var(--font);font-size:11px;cursor:pointer">清除 Key</button>
@@ -520,29 +529,51 @@ function drawRandom(){
 function setCookie(name,value,days){const d=new Date();d.setTime(d.getTime()+days*86400000);document.cookie=name+'='+encodeURIComponent(value)+';expires='+d.toUTCString()+';path=/;SameSite=Lax'}
 function getCookie(name){const m=document.cookie.match('(^|;)\\s*'+name+'\\s*=\\s*([^;]+)');return m?decodeURIComponent(m.pop()):null}
 
-function getApiKey(){
-  let k=localStorage.getItem(STORAGE_KEY);
-  if(!k) k=getCookie(STORAGE_KEY);
-  return k;
-}
-function saveApiKey(k){
-  k=k.trim();
-  localStorage.setItem(STORAGE_KEY,k);
-  setCookie(STORAGE_KEY,k,365);
-  updateKeyIndicator();
-}
-function clearApiKey(){
-  localStorage.removeItem(STORAGE_KEY);
-  setCookie(STORAGE_KEY,'',-1);
-  updateKeyIndicator();
-}
+// ===== API PROVIDERS =====
+const PROVIDERS = {
+  deepseek: {
+    name:'DeepSeek', endpoint:'https://api.deepseek.com/v1/chat/completions',
+    authHeader:'Authorization', authPrefix:'Bearer ', keyPrefix:'sk-',
+    link:'https://platform.deepseek.com', model:'deepseek-chat',
+    format:'openai' // OpenAI-compatible
+  },
+  openai: {
+    name:'OpenAI', endpoint:'https://api.openai.com/v1/chat/completions',
+    authHeader:'Authorization', authPrefix:'Bearer ', keyPrefix:'sk-',
+    link:'https://platform.openai.com/api-keys', model:'gpt-4o-mini',
+    format:'openai'
+  },
+  anthropic: {
+    name:'Claude', endpoint:'https://api.anthropic.com/v1/messages',
+    authHeader:'x-api-key', authPrefix:'', keyPrefix:'sk-ant-',
+    link:'https://console.anthropic.com', model:'claude-sonnet-4-6',
+    format:'anthropic'
+  }
+};
+let currentProvider = localStorage.getItem('pw-provider') || 'deepseek';
+
+function getApiKey(){let k=localStorage.getItem(STORAGE_KEY);if(!k)k=getCookie(STORAGE_KEY);return k}
+function saveApiKey(k){k=k.trim();localStorage.setItem(STORAGE_KEY,k);setCookie(STORAGE_KEY,k,365);updateKeyIndicator()}
+function clearApiKey(){localStorage.removeItem(STORAGE_KEY);setCookie(STORAGE_KEY,'',-1);updateKeyIndicator()}
 function updateKeyIndicator(){
   const el=document.getElementById('key-indicator');
-  if(getApiKey()){el.textContent='⚡ Key 已就绪';el.style.color='rgba(210,185,140,.35)'}
+  const p=PROVIDERS[currentProvider];
+  if(getApiKey()){el.textContent='⚡ '+p.name+' 已就绪';el.style.color='rgba(210,185,140,.35)'}
   else{el.textContent='⚡ Key 未设置';el.style.color='rgba(255,255,255,.22)'}
+}
+function switchProvider(prov){
+  currentProvider=prov;
+  localStorage.setItem('pw-provider',prov);
+  document.querySelectorAll('.prov-tab').forEach(t=>t.classList.toggle('active',t.dataset.prov===prov));
+  const p=PROVIDERS[prov];
+  document.getElementById('key-link').href=p.link;
+  document.getElementById('key-link').textContent=p.link.replace('https://','');
+  document.getElementById('api-key-input').placeholder=p.keyPrefix+'...';
+  document.getElementById('key-desc').innerHTML='Key 仅存本地浏览器，只发往所选 API。<br>前往 <a id=\"key-link\" href=\"'+p.link+'\" target=\"_blank\">'+p.link.replace('https://','')+'</a> 获取。';
 }
 function showKeySetup(){
   hideAll();document.getElementById('key-setup').classList.remove('hidden');
+  switchProvider(currentProvider);
   const inp=document.getElementById('api-key-input');
   inp.value=getApiKey()||'';
   inp.focus();
@@ -621,18 +652,25 @@ function buildChatSystemPrompt(thinkerKey){
 }
 
 // ===== API CALLS =====
-async function callDeepSeek(messages, retries=2){
+async function callAPI(messages, retries=2){
   const apiKey=getApiKey();
   if(!apiKey){showKeySetup();throw new Error('API key not set')}
+  const prov=PROVIDERS[currentProvider];
 
   for(let i=0;i<=retries;i++){
-    const resp=await fetch('https://api.deepseek.com/v1/chat/completions',{
-      method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},
-      body:JSON.stringify({
-        model:'deepseek-chat',max_tokens:1200,temperature:0.7,messages
-      })
-    });
+    let body, headers={'Content-Type':'application/json'};
+    headers[prov.authHeader]=prov.authPrefix+apiKey;
+
+    if(prov.format==='anthropic'){
+      // Anthropic format: system is a top-level param, messages have role:user/assistant only
+      const sysMsg=messages.find(m=>m.role==='system');
+      const chatMsgs=messages.filter(m=>m.role!=='system').map(m=>({role:m.role,content:m.content}));
+      body=JSON.stringify({model:prov.model,max_tokens:1200,system:sysMsg?.content||'',messages:chatMsgs});
+    } else {
+      body=JSON.stringify({model:prov.model,max_tokens:1200,temperature:0.7,messages});
+    }
+
+    const resp=await fetch(prov.endpoint,{method:'POST',headers,body});
     if(!resp.ok){
       const err=await resp.json().catch(()=>({}));
       if(i===retries) throw new Error(err.error?.message||`API error: ${resp.status}`);
@@ -640,10 +678,16 @@ async function callDeepSeek(messages, retries=2){
       continue;
     }
     const data=await resp.json();
-    return {
-      text: data.choices[0].message.content,
-      usage: data.usage || { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 }
-    };
+    let text, usage;
+    if(prov.format==='anthropic'){
+      text=data.content?.[0]?.text||'';
+      usage=data.usage||{input_tokens:0,output_tokens:0};
+      usage={prompt_tokens:usage.input_tokens,completion_tokens:usage.output_tokens,total_tokens:(usage.input_tokens||0)+(usage.output_tokens||0)};
+    } else {
+      text=data.choices[0].message.content;
+      usage=data.usage||{prompt_tokens:0,completion_tokens:0,total_tokens:0};
+    }
+    return {text,usage};
   }
 }
 
@@ -673,7 +717,7 @@ async function handleSubmit(){
   const iv=startLoadingAnim();
 
   try{
-    const resp=await callDeepSeek([
+    const resp=await callAPI([
       {role:'system',content:buildSystemPrompt()},
       {role:'user',content:confusion}
     ]);
@@ -718,7 +762,7 @@ async function handleSwitchThinker(){
   hideAll();document.getElementById('loading-state').classList.remove('hidden');
   const iv=startLoadingAnim();
   try{
-    const resp2=await callDeepSeek([
+    const resp2=await callAPI([
       {role:'system',content:buildSystemPrompt()+'\n\n注意：用户已看过以下思想家的回应，请选其他：'+excludedThinkers.join('、')},
       {role:'user',content:currentConfusion}
     ]);
@@ -812,7 +856,7 @@ async function sendChatMessage(){
   appendTyping();
 
   try{
-    const resp3=await callDeepSeek([
+    const resp3=await callAPI([
       {role:'system',content:buildChatSystemPrompt(currentThinker)},
       ...chatHistory
     ]);
@@ -856,6 +900,7 @@ document.getElementById('clear-key').addEventListener('click',()=>{
   document.getElementById('key-error').style.display='none';
 });
 document.getElementById('api-key-input').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('save-key').click()});
+document.querySelectorAll('.prov-tab').forEach(t=>{t.addEventListener('click',()=>switchProvider(t.dataset.prov))});
 document.getElementById('key-indicator').addEventListener('click',e=>{e.preventDefault();showKeySetup()});
 
 
