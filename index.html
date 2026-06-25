@@ -67,12 +67,6 @@ body::before{
 }
 .submit-btn:hover{background:rgba(210,185,140,.15);border-color:rgba(210,185,140,.4);color:var(--gold)}
 #input-hint{margin-top:14px;font-size:12px;color:var(--text-hint);text-align:center}
-#trending-topics{margin-top:28px;text-align:center}
-.trending-label{font-size:10px;color:rgba(255,255,255,.12);letter-spacing:3px;margin-bottom:12px}
-.trending-chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-width:440px}
-.trending-chip{padding:8px 16px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:20px;color:rgba(255,255,255,.35);font-family:var(--font);font-size:12px;cursor:pointer;transition:all .3s}
-.trending-chip:hover{background:rgba(210,185,140,.06);border-color:rgba(210,185,140,.2);color:var(--gold-dim)}
-
 /* ===== LOADING ===== */
 #loading-orb{width:60px;height:60px;border-radius:50%;background:radial-gradient(circle,rgba(200,170,120,.15) 0%,transparent 70%);animation:loadBreathe 1.5s ease-in-out infinite;margin-bottom:32px}
 @keyframes loadBreathe{0%,100%{transform:scale(.8);opacity:.3}50%{transform:scale(1.3);opacity:.8}}
@@ -255,6 +249,10 @@ footer a:hover{color:rgba(255,255,255,.4)}
 .welcome-github{display:inline-block;font-size:11px;color:rgba(255,255,255,.2);text-decoration:none;transition:color .3s;margin-bottom:8px}
 .welcome-github:hover{color:var(--gold-dim)}
 .welcome-thanks{font-size:10px;color:rgba(255,255,255,.1)}
+.welcome-updater{font-size:10px;color:rgba(255,255,255,.12);margin-top:2px}
+.welcome-changelog{text-align:left}
+.changelog-list p{font-size:11px;color:rgba(255,255,255,.2);line-height:1.7}
+.changelog-list p span{color:rgba(210,185,140,.3);margin-right:8px;font-size:10px}
 
 </style>
 <meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
@@ -279,10 +277,6 @@ footer a:hover{color:rgba(255,255,255,.4)}
         <button id="submit-btn" class="submit-btn">→</button>
       </div>
       <div id="input-hint">按下回车或点击箭头</div>
-    </div>
-    <div id="trending-topics">
-      <p class="trending-label">时代热议</p>
-      <div class="trending-chips" id="trending-chips"></div>
     </div>
   </div>
 
@@ -356,21 +350,28 @@ footer a:hover{color:rgba(255,255,255,.4)}
     <div class="welcome-body">
       <div class="welcome-section">
         <h4>💡 灵感</h4>
-        <p>公元前 300 年，雅典广场上，芝诺站在廊柱下回答困惑者的提问——斯多葛学派由此诞生。两千三百年后，你同样被焦虑、迷茫、内卷所困。但尼采的锤子、海德格尔的向死而生、孔子的仁恕之道、毛泽东的矛盾论——这些思想从未褪色。因为人性不变，困局不变。<br><br><strong>太阳底下无新事。你遇到的问题，历史上最敏锐的头脑早已思考过。</strong></p>
+        <p>公元前 300 年，芝诺在雅典广场的廊柱下回答困惑者的提问——斯多葛学派由此诞生。两千三百年后，你同样被焦虑、迷茫、内卷所困。尼采的锤子、海德格尔的向死而生、孔子的仁恕之道、毛泽东的矛盾论——这些思想从未褪色。<br><br><strong>太阳底下无新事。你遇到的问题，历史上最敏锐的头脑早已思考过。本网站汇聚 27 位中西哲学家与政治家，用他们的思想为你精准解惑。</strong></p>
       </div>
       <div class="welcome-section">
         <h4>🧠 怎么用</h4>
-        <p>写下你的困惑 → AI 从 18 位中西思想家中自动匹配最适合的那一位 → 用他的原话刺穿问题的本质 → 再给你一个意想不到的视角重新框定一切。不满意他的看法？换一位。想追根问底？点击「继续对话」和他深入交流。</p>
+        <p>写下你的困惑 → AI 从 27 位思想家中自动匹配最契合的那一位 → 用他的原话刺穿问题 → 再给你颠覆性的视角重新框定一切。不满意？换一位。想深入？进入聊天模式。首页还有「✨ 抽一张」随机语录和「时代热议」社会议题入口。</p>
       </div>
       <div class="welcome-section welcome-tip">
-        <p>⚡ 首次使用需设置 DeepSeek API Key（在 <a href="https://platform.deepseek.com" target="_blank">platform.deepseek.com</a> 获取，约 ¥1/百万 token）</p>
-        <p>🔒 Key 仅存于你的浏览器中，绝不外传</p>
+        <p>⚡ 首次使用需设置 API Key（支持 DeepSeek / OpenAI / Claude）</p>
+        <p>🔒 Key 仅存于本地浏览器，绝不外传</p>
+      </div>
+      <div class="welcome-section welcome-changelog">
+        <h4>📋 更新日志</h4>
+        <div class="changelog-list">
+          <p><span>2026.06.25</span> 首发上线：27 位思想家 · D 模式诊断 · 对话模式 · 多 API 支持 · 每日名言 · 随机抽取 · 时代热议 · 历史记录</p>
+        </div>
       </div>
     </div>
     <button class="welcome-btn" onclick="closeWelcome()">开始探索</button>
     <div class="welcome-footer">
       <p class="welcome-author">LOFEN</p>
       <a class="welcome-github" href="https://github.com/LOFENBVB/sun-under-sun" target="_blank">github.com/LOFENBVB/sun-under-sun</a>
+      <p class="welcome-updater">更新人：LOFEN</p>
       <p class="welcome-thanks">感谢各位使用 🙏</p>
     </div>
   </div>
@@ -532,27 +533,6 @@ function drawRandom(){
   renderQuote(q, true);
 }
 
-// ===== TRENDING TOPICS =====
-const TRENDING_TOPICS = [
-  {label:'AI 焦虑',q:'AI 会取代我的工作吗？人类的价值在哪里？'},
-  {label:'内卷困境',q:'拼命努力却感觉在原地踏步，内卷有尽头吗？'},
-  {label:'躺平与奋斗',q:'选择躺平是清醒还是逃避？奋斗的意义是什么？'},
-  {label:'消费主义',q:'为什么买了更多东西却感觉更空虚？'},
-  {label:'孤独社会',q:'城市里人越来越多，为什么越来越孤独？'},
-  {label:'信息茧房',q:'算法推送让我越来越偏激，如何突破认知牢笼？'},
-  {label:'生育焦虑',q:'生孩子是义务、权利还是负担？'},
-  {label:'工作意义',q:'如果工作只是为了生存，这辈子算不算白活？'}
-];
-
-function renderTrendingTopics(){
-  const c=document.getElementById('trending-chips');
-  c.innerHTML=TRENDING_TOPICS.map(t=>`<span class="trending-chip" onclick="askTrending('${esc(t.q).replace(/'/g,"\\'")}')">${t.label}</span>`).join('');
-}
-
-function askTrending(question){
-  document.getElementById('confusion-input').value=question;
-  handleSubmit();
-}
 
 // ===== API KEY =====
 function setCookie(name,value,days){const d=new Date();d.setTime(d.getTime()+days*86400000);document.cookie=name+'='+encodeURIComponent(value)+';expires='+d.toUTCString()+';path=/;SameSite=Lax'}
@@ -646,7 +626,14 @@ ${profiles}
   "转念": "框架颠覆（180字内）。用核心哲学概念重新框定问题。让用户产生'原来可以这样看'的豁然感。"
 }
 
-铁律：不要鸡汤、不要安慰、不要共情。要锋利、诚实、有哲学深度。要直指人心，一针见血。
+铁律：
+- 不要鸡汤、不要安慰、不要共情。要锋利、诚实、有哲学深度
+- 每个回应必须严格基于该思想家的真实核心概念。诊断用他的概念体系来分析，转念用他的独特视角来重构。决不能把不同思想家的概念混淆
+- 选了尼采就用权力意志/超人/永恒轮回。选了海德格尔就用此在/向死而生/常人。选了孔子就用仁/礼/君子。以此类推
+- 绝不说该思想家不可能说的话——每句话都要符合他的思想体系
+
+## 时代议题深度模式
+如果用户问题涉及当代社会议题（AI 焦虑、内卷、消费主义、躺平、信息茧房、技术异化、工作意义、孤独社会等），诊断中要揭示其时代结构性根源——并用该思想家的独特概念给出超越主流叙事的视角。
 
 ## JSON 格式要求
 - 只返回纯 JSON，不要任何 markdown 包裹（不要 \`\`\`json）
@@ -958,7 +945,7 @@ document.getElementById('key-indicator').addEventListener('click',e=>{e.preventD
 // ===== INIT =====
 document.addEventListener('DOMContentLoaded',()=>{
   createParticles();
-  renderDailyQuote(); renderTrendingTopics(); updateKeyIndicator(); checkApiKey();
+  renderDailyQuote(); updateKeyIndicator(); checkApiKey();
   const now=new Date();
   const msNext=new Date(now.getFullYear(),now.getMonth(),now.getDate()+1).getTime()-now.getTime();
   setTimeout(()=>{renderDailyQuote();setInterval(renderDailyQuote,86400000)},msNext+1000);
