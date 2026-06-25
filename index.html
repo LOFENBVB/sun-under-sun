@@ -130,16 +130,6 @@ body::before{
 .chat-typing{align-self:flex-start;padding:12px 18px;color:var(--text-dim);font-size:13px;font-style:italic}
 .chat-token{align-self:flex-end;font-size:10px;color:rgba(255,255,255,.18);padding:4px 8px;margin-top:4px}
 
-/* ===== LOGIN ===== */
-#login-content{text-align:center;max-width:340px;width:100%}
-#login-orb{width:80px;height:80px;border-radius:50%;background:radial-gradient(circle at 40% 35%,var(--gold-subtle) 0%,transparent 70%);margin:0 auto 28px;animation:breathe 4s ease-in-out infinite}
-#login-content h3{font-size:18px;color:#fff;font-weight:normal;margin-bottom:20px}
-#login-content input{width:100%;padding:14px 18px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);border-radius:10px;color:#fff;font-family:var(--font);font-size:15px;outline:none;transition:all .3s;margin-bottom:12px}
-#login-content input:focus{border-color:var(--gold-dim);background:rgba(255,255,255,.18);box-shadow:0 0 20px rgba(210,185,140,.15)}
-#login-content input::placeholder{color:rgba(255,255,255,.35)}
-#login-buttons{display:flex;gap:10px;margin-top:8px}
-#login-buttons .btn{flex:1}
-
 /* ===== HISTORY ===== */
 #history-btn{position:fixed;top:16px;right:24px;z-index:10;font-size:12px;color:var(--text-dim);cursor:pointer;background:none;border:none;font-family:var(--font);transition:color .3s}
 #history-btn:hover{color:var(--gold-dim)}
@@ -219,25 +209,7 @@ footer a:hover{color:rgba(255,255,255,.4)}
 <body>
 
 <div id="particles"></div>
-
-<!-- ===== LOGIN ===== -->
-<div id="login-screen" class="page">
-  <div id="login-content">
-    <div id="login-orb"></div>
-    <div class="sect-title">太 阳 底 下 无 新 事</div>
-    <h3 id="login-title">登录</h3>
-    <input id="login-username" type="text" placeholder="用户名" autofocus>
-    <input id="login-password" type="password" placeholder="密码">
-    <div id="login-buttons">
-      <button id="login-btn" class="btn btn-primary">登录</button>
-      <button id="register-btn" class="btn">注册</button>
-    </div>
-    <p id="login-msg" style="font-size:11px;color:#c06050;margin-top:12px;display:none"></p>
-    <p style="font-size:10px;color:var(--text-hint);margin-top:16px">数据仅存储在本机浏览器中，不会上传</p>
-  </div>
-</div>
-
-<div id="app" class="hidden">
+<div id="app">
 
   <!-- ===== INITIAL ===== -->
   <div id="initial-state" class="page">
@@ -328,7 +300,6 @@ let currentThinker = null;
 let excludedThinkers = [];
 let chatHistory = [];
 let tokenTotal = 0;
-let currentUser = null;
 
 // ===== AMBIENT MUSIC =====
 let audioCtx=null, musicOn=true, currentNodes=[];
@@ -387,53 +358,13 @@ function toggleMusic(){
   else{btn.classList.remove('on');btn.textContent='♪';stopAmbient()}
 }
 
-// ===== AUTH =====
-async function hashPassword(pw){const e=new TextEncoder();const d=await crypto.subtle.digest('SHA-256',e.encode(pw));return Array.from(new Uint8Array(d)).map(b=>b.toString(16).padStart(2,'0')).join('')}
-function getAccounts(){try{return JSON.parse(localStorage.getItem('pw-accounts')||'{}')}catch(e){return{}}}
-function saveAccounts(accts){localStorage.setItem('pw-accounts',JSON.stringify(accts))}
-
-async function doLogin(){
-  const u=document.getElementById('login-username').value.trim();
-  const p=document.getElementById('login-password').value.trim();
-  const msg=document.getElementById('login-msg');
-  if(!u||!p){msg.textContent='请填写用户名和密码';msg.style.display='block';return}
-  const accts=getAccounts();
-  const hash=await hashPassword(p);
-  if(!accts[u]){msg.textContent='用户不存在，请先注册';msg.style.display='block';return}
-  if(accts[u]!==hash){msg.textContent='密码错误';msg.style.display='block';return}
-  currentUser=u;
-  msg.style.display='none';
-  document.getElementById('login-screen').classList.add('hidden');
-  document.getElementById('app').classList.remove('hidden');
-  document.getElementById('initial-state').classList.remove('hidden');
-  document.getElementById('confusion-input').focus();
-  renderHistoryBadge();
-  updateKeyIndicator();
-}
-
-async function doRegister(){
-  const u=document.getElementById('login-username').value.trim();
-  const p=document.getElementById('login-password').value.trim();
-  const msg=document.getElementById('login-msg');
-  if(!u||!p){msg.textContent='请填写用户名和密码';msg.style.display='block';return}
-  if(p.length<3){msg.textContent='密码至少3位';msg.style.display='block';return}
-  const accts=getAccounts();
-  if(accts[u]){msg.textContent='用户已存在，请直接登录';msg.style.display='block';return}
-  accts[u]=await hashPassword(p);
-  saveAccounts(accts);
-  document.getElementById('login-title').textContent='注册成功，请登录';
-  document.getElementById('login-password').value='';
-  document.getElementById('login-msg').style.display='none';
-}
-
 // ===== HISTORY =====
-function getHistory(){try{return JSON.parse(localStorage.getItem('pw-history-'+currentUser)||'[]')}catch(e){return[]}}
+function getHistory(){try{return JSON.parse(localStorage.getItem('pw-history')||'[]')}catch(e){return[]}}
 function saveHistory(entry){
-  if(!currentUser) return;
   const h=getHistory();
   h.unshift({...entry,date:new Date().toISOString()});
   if(h.length>100) h.length=100;
-  localStorage.setItem('pw-history-'+currentUser,JSON.stringify(h));
+  localStorage.setItem('pw-history',JSON.stringify(h));
   renderHistoryBadge();
 }
 
@@ -573,7 +504,7 @@ function hideKeySetup(){
 }
 function checkApiKey(){if(!getApiKey()){showKeySetup();return false}return true}
 function hideAll(){
-  ['initial-state','loading-state','response-state','chat-state','key-setup','login-screen'].forEach(id=>{
+  ['initial-state','loading-state','response-state','chat-state','key-setup'].forEach(id=>{
     const el=document.getElementById(id); if(el) el.classList.add('hidden');
   });
 }
@@ -871,23 +802,11 @@ document.getElementById('clear-key').addEventListener('click',()=>{
 document.getElementById('api-key-input').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('save-key').click()});
 document.getElementById('key-indicator').addEventListener('click',e=>{e.preventDefault();showKeySetup()});
 
-// Login bindings
-document.getElementById('login-btn').addEventListener('click',doLogin);
-document.getElementById('register-btn').addEventListener('click',doRegister);
-document.getElementById('login-password').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin()});
-document.getElementById('login-username').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('login-password').focus()});
 
 // ===== INIT =====
 document.addEventListener('DOMContentLoaded',()=>{
   createParticles();
-  // Show login first
-  const accts=getAccounts();
-  if(Object.keys(accts).length===0){
-    document.getElementById('login-title').textContent='首次使用，请注册';
-  }
-  document.getElementById('login-screen').classList.remove('hidden');
-
-  renderDailyQuote(); updateKeyIndicator();
+  renderDailyQuote(); updateKeyIndicator(); checkApiKey();
   document.getElementById('music-btn').classList.add('on');
   const now=new Date();
   const msNext=new Date(now.getFullYear(),now.getMonth(),now.getDate()+1).getTime()-now.getTime();
