@@ -440,7 +440,6 @@ function updateTokenDisplay(){
 // ===== WELCOME =====
 function closeWelcome(){
   document.getElementById('welcome-overlay').style.display='none';
-  sessionStorage.setItem('pw-welcome-seen','1');
 }
 
 // ===== PARTICLES =====
@@ -816,8 +815,6 @@ document.getElementById('key-indicator').addEventListener('click',e=>{e.preventD
 // ===== INIT =====
 document.addEventListener('DOMContentLoaded',()=>{
   createParticles();
-  if(!sessionStorage.getItem('pw-welcome-seen')) document.getElementById('welcome-overlay').style.display='flex';
-  else document.getElementById('welcome-overlay').style.display='none';
   renderDailyQuote(); updateKeyIndicator(); checkApiKey();
   const now=new Date();
   const msNext=new Date(now.getFullYear(),now.getMonth(),now.getDate()+1).getTime()-now.getTime();
