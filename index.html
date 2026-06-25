@@ -727,9 +727,19 @@ async function handleSubmit(){
       {role:'user',content:confusion}
     ]);
     addTokens(resp.usage);
-    console.log('API raw response:', resp.text.substring(0,300));
-    const result=parseJSON(resp.text);
     clearInterval(iv);
+    let result;
+    try{result=parseJSON(resp.text)}
+    catch(parseErr){
+      console.warn('JSON parse failed, showing raw:', parseErr.message);
+      // Fallback: show raw response in a simple card
+      document.getElementById('response-card').innerHTML=`
+        <div class="rsp-quote"><p class="qt-zh" style="font-size:14px;line-height:1.9">${esc(resp.text)}</p></div>
+        <div class="action-row"><button class="btn btn-primary" onclick="handleSwitchThinker()">换一位思想家</button></div>
+        <button onclick="showInitial()" class="btn btn-mini" style="margin-top:12px">回到星云</button>`;
+      hideAll();document.getElementById('response-state').classList.remove('hidden');
+      return;
+    }
     document.getElementById('loading-text').textContent=`已豁然——${result.thinker.name}回应`;
     await new Promise(r=>setTimeout(r,800));
 
