@@ -200,6 +200,42 @@ footer a:hover{color:rgba(255,255,255,.4)}
   #response-card{padding:0 8px}
   footer{bottom:max(12px,env(safe-area-inset-bottom))}
 }
+
+/* Welcome Modal */
+.welcome-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:999;
+  display:flex;align-items:center;justify-content:center;
+  padding:20px;backdrop-filter:blur(8px);
+}
+.welcome-card{
+  background:rgba(15,15,25,.95);border:1px solid rgba(255,255,255,.1);
+  border-radius:16px;max-width:500px;width:100%;max-height:85vh;
+  overflow-y:auto;padding:32px 28px;text-align:center;
+  animation:fadeIn .5s ease-out;
+}
+.welcome-orb{
+  width:60px;height:60px;border-radius:50%;
+  background:radial-gradient(circle at 40% 35%,var(--gold-subtle) 0%,transparent 70%);
+  margin:0 auto 20px;animation:breathe 4s ease-in-out infinite;
+}
+.welcome-card h2{font-size:20px;color:var(--gold-dim);font-weight:normal;letter-spacing:4px;margin-bottom:8px}
+.welcome-sub{font-size:13px;color:var(--text-dim);margin-bottom:24px;line-height:1.6}
+.welcome-body{text-align:left;margin-bottom:24px}
+.welcome-section{margin-bottom:18px}
+.welcome-section h4{font-size:13px;color:var(--gold-dim);margin-bottom:6px;font-weight:normal}
+.welcome-section p{font-size:12px;color:#b0a898;line-height:1.7}
+.welcome-tip p{font-size:11px;color:var(--text-dim);line-height:1.6}
+.welcome-tip a{color:var(--gold-dim)}
+.welcome-btn{
+  padding:12px 48px;background:rgba(210,185,140,.1);
+  border:1px solid rgba(210,185,140,.3);border-radius:24px;
+  color:var(--gold-dim);font-family:var(--font);font-size:15px;
+  cursor:pointer;transition:all .3s;
+}
+.welcome-btn:hover{background:rgba(210,185,140,.2);border-color:var(--gold-dim);color:var(--gold)}
+.welcome-author{margin-top:16px;font-size:11px;color:rgba(255,255,255,.15)}
+.welcome-thanks{margin-top:4px;font-size:11px;color:rgba(255,255,255,.12)}
+
 </style>
 <meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
 </head>
@@ -276,6 +312,32 @@ footer a:hover{color:rgba(255,255,255,.4)}
     </div>
   </div>
 
+</div>
+
+<!-- ===== WELCOME MODAL ===== -->
+<div id="welcome-overlay" class="welcome-overlay">
+  <div class="welcome-card">
+    <div class="welcome-orb"></div>
+    <h2>太阳底下无新事</h2>
+    <p class="welcome-sub">人类的问题古今相通——让历史上最敏锐的思想家为你解惑</p>
+    <div class="welcome-body">
+      <div class="welcome-section">
+        <h4>💡 灵感</h4>
+        <p>古罗马广场上，人们带着困惑走向斯多葛学派，寻求智慧。今天，当你被焦虑、迷茫、内卷所困——尼采、海德格尔、孔子、毛泽东……18 位中西思想家正等待与你对话。他们的洞察从未过时，"太阳底下无新事"。</p>
+      </div>
+      <div class="welcome-section">
+        <h4>🧠 怎么用</h4>
+        <p>输入你的困惑 → 系统自动匹配最契合的思想家 → 得到锋利的诊断与颠覆性的转念。不满意？换一位。想深入？点击"继续对话"进入聊天模式。</p>
+      </div>
+      <div class="welcome-section welcome-tip">
+        <p>⚡ 首次使用需设置 DeepSeek API Key（在 <a href="https://platform.deepseek.com" target="_blank">platform.deepseek.com</a> 获取，约 ¥1/百万 token）</p>
+        <p>🔒 Key 仅存于你的浏览器中，绝不外传</p>
+      </div>
+    </div>
+    <button class="welcome-btn" onclick="closeWelcome()">开始探索</button>
+    <p class="welcome-author">—— LOFEN</p>
+    <p class="welcome-thanks">感谢各位使用 🙏</p>
+  </div>
 </div>
 
 <footer>
@@ -368,6 +430,12 @@ function updateTokenDisplay(){
   });
   const chatEl = document.getElementById('chat-token');
   if(chatEl && tokenTotal > 0) chatEl.textContent = text;
+}
+
+// ===== WELCOME =====
+function closeWelcome(){
+  document.getElementById('welcome-overlay').style.display='none';
+  localStorage.setItem('pw-welcome-seen','1');
 }
 
 // ===== PARTICLES =====
@@ -743,6 +811,8 @@ document.getElementById('key-indicator').addEventListener('click',e=>{e.preventD
 // ===== INIT =====
 document.addEventListener('DOMContentLoaded',()=>{
   createParticles();
+  if(!localStorage.getItem('pw-welcome-seen')) document.getElementById('welcome-overlay').style.display='flex';
+  else document.getElementById('welcome-overlay').style.display='none';
   renderDailyQuote(); updateKeyIndicator(); checkApiKey();
   const now=new Date();
   const msNext=new Date(now.getFullYear(),now.getMonth(),now.getDate()+1).getTime()-now.getTime();
