@@ -52,9 +52,17 @@ body::before{
 #daily-quote .qt-orig{font-size:11px;color:rgba(210,190,160,.28);font-style:italic;line-height:1.6;margin-top:4px}
 #daily-quote .qt-auth{font-size:12px;color:rgba(210,190,160,.3);margin-top:8px}
 #input-wrap{position:relative;width:420px;max-width:90vw}
-#confusion-input{width:100%;padding:18px 24px;background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:12px;color:var(--text);font-size:15px;font-family:var(--font);outline:none;transition:all .4s}
+.input-row{display:flex;gap:10px;align-items:center}
+#confusion-input{flex:1;padding:18px 24px;background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:12px;color:var(--text);font-size:15px;font-family:var(--font);outline:none;transition:all .4s}
 #confusion-input:focus{border-color:var(--border-focus);background:rgba(255,255,255,.08);box-shadow:0 0 40px var(--gold-glow)}
 #confusion-input::placeholder{color:var(--text-hint);font-style:italic}
+.submit-btn{
+  width:48px;height:48px;border-radius:12px;flex-shrink:0;
+  background:rgba(210,185,140,.08);border:1px solid rgba(210,185,140,.2);
+  color:var(--gold-dim);font-size:20px;font-family:var(--font);
+  cursor:pointer;transition:all .3s;display:flex;align-items:center;justify-content:center;
+}
+.submit-btn:hover{background:rgba(210,185,140,.15);border-color:rgba(210,185,140,.4);color:var(--gold)}
 #input-hint{margin-top:14px;font-size:12px;color:var(--text-hint);text-align:center}
 
 /* ===== LOADING ===== */
@@ -157,6 +165,8 @@ footer a:hover{color:rgba(255,255,255,.4)}
   #confusion-input{font-size:16px;padding:16px 18px}
   .rsp-quote .qt-zh{font-size:16px}
   .rsp-quote .qt-orig{font-size:12px}
+  .submit-btn{width:44px;height:44px;border-radius:10px;font-size:18px}
+  .input-row{gap:8px}
   .chat-bubble{max-width:92%}
   .chat-bubble.thinker{font-size:14px;padding:12px 15px}
   .chat-bubble.user{font-size:14px;padding:12px 15px}
@@ -185,8 +195,11 @@ footer a:hover{color:rgba(255,255,255,.4)}
     <div class="sect-title">太 阳 底 下 无 新 事</div>
     <div id="daily-quote"></div>
     <div id="input-wrap">
-      <input id="confusion-input" type="text" placeholder="输入你的困惑..." autofocus>
-      <div id="input-hint">按下回车，思想之门将为你打开</div>
+      <div class="input-row">
+        <input id="confusion-input" type="text" placeholder="输入你的困惑..." autofocus>
+        <button id="submit-btn" class="submit-btn">→</button>
+      </div>
+      <div id="input-hint">按下回车或点击箭头</div>
     </div>
   </div>
 
@@ -591,6 +604,7 @@ function startLoadingAnim(){
 
 // ===== EVENT BINDINGS =====
 document.getElementById('confusion-input').addEventListener('keydown',e=>{if(e.key==='Enter')handleSubmit()});
+document.getElementById('submit-btn').addEventListener('click',handleSubmit);
 document.getElementById('switch-thinker').addEventListener('click',handleSwitchThinker);
 document.getElementById('back-btn').addEventListener('click',showInitial);
 document.getElementById('continue-chat').addEventListener('click',startChat);
