@@ -199,6 +199,11 @@ footer a:hover{color:rgba(255,255,255,.4)}
   .btn{font-size:12px;padding:10px 22px}
   #response-card{padding:0 8px}
   footer{bottom:max(12px,env(safe-area-inset-bottom))}
+  .welcome-card{padding:24px 18px;max-height:90vh}
+  .welcome-card h2{font-size:17px}
+  .welcome-sub{font-size:12px}
+  .welcome-section p{font-size:11px}
+  .welcome-btn{padding:12px 36px;font-size:14px}
 }
 
 /* Welcome Modal */
@@ -435,7 +440,7 @@ function updateTokenDisplay(){
 // ===== WELCOME =====
 function closeWelcome(){
   document.getElementById('welcome-overlay').style.display='none';
-  localStorage.setItem('pw-welcome-seen','1');
+  sessionStorage.setItem('pw-welcome-seen','1');
 }
 
 // ===== PARTICLES =====
@@ -811,7 +816,7 @@ document.getElementById('key-indicator').addEventListener('click',e=>{e.preventD
 // ===== INIT =====
 document.addEventListener('DOMContentLoaded',()=>{
   createParticles();
-  if(!localStorage.getItem('pw-welcome-seen')) document.getElementById('welcome-overlay').style.display='flex';
+  if(!sessionStorage.getItem('pw-welcome-seen')) document.getElementById('welcome-overlay').style.display='flex';
   else document.getElementById('welcome-overlay').style.display='none';
   renderDailyQuote(); updateKeyIndicator(); checkApiKey();
   const now=new Date();
