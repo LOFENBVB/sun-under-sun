@@ -143,6 +143,9 @@ body::before{
 /* ===== HISTORY ===== */
 #history-btn{position:fixed;top:16px;right:24px;z-index:10;font-size:12px;color:var(--text-dim);cursor:pointer;background:none;border:none;font-family:var(--font);transition:color .3s}
 #history-btn:hover{color:var(--gold-dim)}
+#music-btn{position:fixed;top:16px;left:24px;z-index:10;font-size:13px;color:var(--text-dim);cursor:pointer;background:none;border:none;font-family:var(--font);transition:all .3s}
+#music-btn:hover{color:var(--gold-dim)}
+#music-btn.on{color:rgba(210,185,140,.45)}
 #history-panel{position:fixed;top:0;right:0;bottom:0;width:100%;max-width:380px;background:rgba(8,8,16,.96);backdrop-filter:blur(20px);z-index:50;border-left:1px solid rgba(255,255,255,.06);display:flex;flex-direction:column;transform:translateX(100%);transition:transform .3s ease-out}
 #history-panel.open{transform:translateX(0)}
 #history-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:49;display:none}
@@ -239,6 +242,7 @@ footer a:hover{color:rgba(255,255,255,.4)}
   <div id="initial-state" class="page">
     <div id="orb"></div>
     <div class="sect-title">太 阳 底 下 无 新 事</div>
+    <button id="music-btn" onclick="toggleMusic()" title="环境音景">♪</button>
     <button id="history-btn" onclick="openHistory()">历史记录</button>
     <div id="daily-quote"></div>
     <div id="input-wrap">
@@ -324,6 +328,63 @@ let excludedThinkers = [];
 let chatHistory = [];
 let tokenTotal = 0;
 let currentUser = null;
+
+// ===== AMBIENT MUSIC =====
+let audioCtx=null, musicOn=true, currentNodes=[];
+const MOODS={
+  '存在主义':{freq:[55,82.5,110],type:'sawtooth',gain:0.04,lfo:0.08,desc:'深邃暗涌'},
+  '辩证/历史':{freq:[65,98,130],type:'triangle',gain:0.05,lfo:0.12,desc:'低沉稳进'},
+  '斯多葛':{freq:[87,130,174],type:'sine',gain:0.04,lfo:0.06,desc:'沉静内省'},
+  '东方智慧':{freq:[98,147,196],type:'sine',gain:0.03,lfo:0.04,desc:'空灵悠远'},
+  '理性主义':{freq:[73,110,146],type:'triangle',gain:0.04,lfo:0.07,desc:'严谨和声'},
+  '超越视角':{freq:[65,130,261],type:'sine',gain:0.03,lfo:0.03,desc:'纯净冥想'}
+};
+
+function getMood(school){
+  for(const[k,v]of Object.entries(MOODS)){if(school&&school.includes(k))return v}
+  return MOODS['存在主义'];
+}
+
+function stopAmbient(){
+  currentNodes.forEach(n=>{try{n.gain.gain.linearRampToValueAtTime(0,audioCtx.currentTime+0.8);n.osc.stop(audioCtx.currentTime+1)}catch(e){}});
+  currentNodes=[];
+}
+
+async function playAmbient(school){
+  if(!musicOn)return;
+  stopAmbient();
+  if(!audioCtx){try{audioCtx=new(window.AudioContext||window.webkitAudioContext)()}catch(e){return}}
+  if(audioCtx.state==='suspended')await audioCtx.resume();
+  const mood=getMood(school);
+  const now=audioCtx.currentTime;
+
+  mood.freq.forEach((f,i)=>{
+    const osc=audioCtx.createOscillator();
+    const gain=audioCtx.createGain();
+    const lfo=audioCtx.createOscillator();
+    const lfoGain=audioCtx.createGain();
+
+    osc.type=mood.type; osc.frequency.value=f;
+    lfo.type='sine'; lfo.frequency.value=mood.lfo;
+    lfoGain.gain.value=f*0.03;
+
+    gain.gain.setValueAtTime(0,now);
+    gain.gain.linearRampToValueAtTime(mood.gain*(1-i*0.25),now+1.5);
+
+    lfo.connect(lfoGain); lfoGain.connect(osc.frequency);
+    osc.connect(gain); gain.connect(audioCtx.destination);
+
+    osc.start(now); lfo.start(now);
+    currentNodes.push({osc,gain,lfo});
+  });
+}
+
+function toggleMusic(){
+  musicOn=!musicOn;
+  const btn=document.getElementById('music-btn');
+  if(musicOn){btn.classList.add('on');btn.textContent='♪';if(currentThinker)playAmbient(PHILOSOPHERS[currentThinker]?.school)}
+  else{btn.classList.remove('on');btn.textContent='♪';stopAmbient()}
+}
 
 // ===== AUTH =====
 async function hashPassword(pw){const e=new TextEncoder();const d=await crypto.subtle.digest('SHA-256',e.encode(pw));return Array.from(new Uint8Array(d)).map(b=>b.toString(16).padStart(2,'0')).join('')}
@@ -635,6 +696,7 @@ async function handleSubmit(){
     currentThinker=result.thinker.key;
     excludedThinkers.push(result.thinker.key);
     renderResponse(result);
+    playAmbient(result.thinker.school);
     saveHistory({confusion:currentConfusion,thinker:result.thinker.name,thinkerKey:result.thinker.key,quote:result.quote,诊断:result.诊断,转念:result.转念});
     hideAll();
     document.getElementById('response-state').classList.remove('hidden');
@@ -679,6 +741,7 @@ async function handleSwitchThinker(){
     excludedThinkers.push(result.thinker.key);
     currentThinker=result.thinker.key;
     renderResponse(result);
+    playAmbient(result.thinker.school);
     hideAll();document.getElementById('response-state').classList.remove('hidden');
   }catch(err){
     clearInterval(iv);
@@ -824,6 +887,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   document.getElementById('login-screen').classList.remove('hidden');
 
   renderDailyQuote(); updateKeyIndicator();
+  document.getElementById('music-btn').classList.add('on');
   const now=new Date();
   const msNext=new Date(now.getFullYear(),now.getMonth(),now.getDate()+1).getTime()-now.getTime();
   setTimeout(()=>{renderDailyQuote();setInterval(renderDailyQuote,86400000)},msNext+1000);
