@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>太阳底下无新事</title>
+<style>
+:root {
+  --bg: #050508;
+  --gold: rgba(200,170,120,1);
+  --gold-dim: rgba(200,170,120,0.5);
+  --gold-subtle: rgba(200,170,120,0.12);
+  --gold-glow: rgba(200,170,120,0.06);
+  --text: #d0c8b8;
+  --text-dim: rgba(200,170,120,0.4);
+  --text-hint: rgba(255,255,255,0.15);
+  --border: rgba(255,255,255,0.08);
+  --border-focus: rgba(200,170,120,0.25);
+  --font: 'Georgia','Noto Serif SC','SimSun',serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  background:var(--bg); color:var(--text); font-family:var(--font);
+  min-height:100vh; overflow-x:hidden;
+}
+body::before{
+  content:''; position:fixed; inset:0;
+  background:radial-gradient(ellipse at 50% 40%,#0d0d18 0%,#050508 60%);
+  pointer-events:none; z-index:0;
+}
+.hidden{display:none!important}
+
+/* Orb */
+#orb{
+  width:180px; height:180px; border-radius:50%;
+  background:radial-gradient(circle at 40% 35%,var(--gold-subtle) 0%,rgba(200,170,120,0.03) 40%,transparent 70%);
+  position:relative; margin:0 auto;
+  animation:breathe 4s ease-in-out infinite;
+}
+#orb::before{
+  content:''; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+  width:80px; height:80px; border-radius:50%;
+  background:radial-gradient(circle,rgba(200,170,120,0.2) 0%,transparent 60%);
+  animation:pulse 3s ease-in-out infinite;
+}
+#orb::after{
+  content:''; position:absolute; top:-30px; left:-30px; right:-30px; bottom:-30px;
+  border-radius:50%; border:1px solid rgba(200,170,120,0.06);
+  animation:halo 5s linear infinite;
+}
+@keyframes breathe{0%,100%{transform:scale(1);opacity:.8}50%{transform:scale(1.08);opacity:1}}
+@keyframes pulse{0%,100%{transform:translate(-50%,-50%) scale(1);opacity:.5}50%{transform:translate(-50%,-50%) scale(1.3);opacity:.8}}
+@keyframes halo{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+
+/* Layout */
+#app{position:relative;z-index:1}
+#initial-state,#loading-state,#response-state,#key-setup{
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  min-height:100vh; padding:40px 24px;
+}
+#initial-state #orb{margin-bottom:40px}
+
+/* Title line */
+.sect-title{
+  font-size:14px; letter-spacing:6px; color:var(--text-dim);
+  margin-bottom:32px; text-align:center;
+}
+
+/* Daily Quote */
+#daily-quote{text-align:center;margin-bottom:28px;max-width:460px}
+#daily-quote .qt-zh{font-size:15px;color:rgba(200,180,150,0.35);font-style:italic;line-height:1.8}
+#daily-quote .qt-orig{font-size:11px;color:rgba(200,180,150,0.16);font-style:italic;line-height:1.6;margin-top:4px}
+#daily-quote .qt-auth{font-size:12px;color:rgba(200,180,150,0.2);margin-top:8px}
+
+/* Input */
+#input-wrap{position:relative;width:420px;max-width:90vw}
+#confusion-input{
+  width:100%; padding:18px 24px; background:rgba(255,255,255,0.03);
+  border:1px solid var(--border); border-radius:12px;
+  color:var(--text); font-size:15px; font-family:var(--font);
+  outline:none; transition:all .4s;
+}
+#confusion-input:focus{
+  border-color:var(--border-focus);
+  background:rgba(255,255,255,0.05);
+  box-shadow:0 0 40px var(--gold-glow);
+}
+#confusion-input::placeholder{color:var(--text-hint);font-style:italic}
+#input-hint{margin-top:14px;font-size:12px;color:var(--text-hint);text-align:center}
+
+/* Loading */
+#loading-orb{
+  width:60px;height:60px;border-radius:50%;
+  background:radial-gradient(circle,rgba(200,170,120,0.15) 0%,transparent 70%);
+  animation:loadBreathe 1.5s ease-in-out infinite; margin-bottom:32px;
+}
+@keyframes loadBreathe{0%,100%{transform:scale(.8);opacity:.3}50%{transform:scale(1.3);opacity:.8}}
+#loading-text{font-size:13px;color:var(--text-dim);animation:loadPulse 2s ease-in-out infinite}
+@keyframes loadPulse{0%,100%{opacity:.3}50%{opacity:.7}}
+
+/* Response Card */
+#response-card{
+  max-width:560px; width:100%;
+  animation:fadeIn .8s ease-out .3s forwards; opacity:0;
+}
+@keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.rsp-thinker{text-align:center;margin-bottom:28px}
+.rsp-thinker .rsp-name{font-size:20px;color:var(--gold-dim);letter-spacing:2px}
+.rsp-thinker .rsp-meta{font-size:11px;color:var(--text-dim);margin-top:4px}
+.rsp-quote{text-align:center;padding:24px 0;margin-bottom:28px;
+  border-top:1px solid rgba(255,255,255,0.05);border-bottom:1px solid rgba(255,255,255,0.05)}
+.rsp-quote .qt-zh{font-size:17px;font-style:italic;line-height:1.8;color:var(--text);margin-bottom:6px}
+.rsp-quote .qt-orig{font-size:13px;font-style:italic;line-height:1.6;color:rgba(200,180,150,0.22)}
+.rsp-section{margin-bottom:24px}
+.rsp-section h3{font-size:12px;letter-spacing:4px;color:var(--gold-dim);margin-bottom:10px;font-weight:normal}
+.rsp-section p{font-size:14px;line-height:1.9;color:#b0a898}
+
+#switch-thinker{
+  margin-top:36px; padding:10px 28px; background:transparent;
+  border:1px solid var(--border); border-radius:20px;
+  color:var(--text-dim); font-family:var(--font); font-size:13px;
+  cursor:pointer; transition:all .3s;
+}
+#switch-thinker:hover{border-color:rgba(200,170,120,.3);color:var(--gold-dim)}
+
+/* Back */
+#back-btn{
+  margin-top:16px; padding:8px 20px; background:transparent;
+  border:none; color:rgba(255,255,255,.12); font-family:var(--font);
+  font-size:12px; cursor:pointer; transition:color .3s;
+}
+#back-btn:hover{color:rgba(255,255,255,.3)}
+
+/* Key Setup */
+#key-setup-content{text-align:center;max-width:360px;padding:40px}
+#key-setup-content h2{font-size:18px;color:var(--text);font-weight:normal;margin-bottom:12px}
+#key-setup-content p{font-size:12px;color:var(--text-dim);margin-bottom:24px;line-height:1.6}
+#api-key-input{
+  width:100%; padding:14px 18px; background:rgba(255,255,255,0.03);
+  border:1px solid var(--border); border-radius:8px; color:var(--text);
+  font-family:var(--font); font-size:14px; outline:none; transition:all .3s; margin-bottom:16px;
+}
+#api-key-input:focus{border-color:var(--border-focus);box-shadow:0 0 30px var(--gold-glow)}
+#save-key{
+  padding:10px 32px; background:rgba(200,170,120,.08);
+  border:1px solid rgba(200,170,120,.2); border-radius:8px;
+  color:var(--gold-dim); font-family:var(--font); font-size:14px;
+  cursor:pointer; transition:all .3s;
+}
+#save-key:hover{background:rgba(200,170,120,.15);border-color:rgba(200,170,120,.4);color:var(--gold)}
+
+/* Footer */
+footer{position:fixed;bottom:16px;right:24px;z-index:10}
+footer a{font-size:11px;color:rgba(255,255,255,.1);text-decoration:none;transition:color .3s}
+footer a:hover{color:rgba(255,255,255,.3)}
+
+/* Error */
+.error-state{text-align:center;color:var(--text-dim);padding:40px}
+.error-state p{margin-bottom:16px}
+.error-state button{
+  padding:8px 24px; background:transparent; border:1px solid var(--border);
+  border-radius:20px; color:var(--text-dim); font-family:var(--font); cursor:pointer;
+}
+.error-state button:hover{border-color:var(--gold-dim);color:var(--gold-dim)}
+
+@media(max-width:600px){
+  #orb{width:130px;height:130px}
+  #orb::before{width:56px;height:56px}
+  #orb::after{top:-20px;left:-20px;right:-20px;bottom:-20px}
+  .sect-title{font-size:11px;letter-spacing:4px}
+  #daily-quote .qt-zh{font-size:13px}
+  #confusion-input{font-size:14px;padding:16px 20px}
+  .rsp-quote .qt-zh{font-size:15px}
+}
+
+/* Particle */
+.particle{position:fixed;border-radius:50%;pointer-events:none;z-index:0;
+  animation:floatUp 6s ease-in infinite}
+@keyframes floatUp{
+  0%{transform:translateY(0) scale(0);opacity:0}
+  20%{opacity:.6}80%{opacity:.1}
+  100%{transform:translateY(-60vh) scale(1.5);opacity:0}
+}
+</style>
+</head>
+<body>
+
+<div id="particles"></div>
+
+<main id="app">
+  <!-- Initial State -->
+  <div id="initial-state">
+    <div id="orb"></div>
+    <div class="sect-title">太 阳 底 下 无 新 事</div>
+    <div id="daily-quote"></div>
+    <div id="input-wrap">
+      <input id="confusion-input" type="text" placeholder="输入你的困惑..." autofocus>
+      <div id="input-hint">按下回车，思想之门将为你打开</div>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div id="loading-state" class="hidden">
+    <div id="loading-orb"></div>
+    <p id="loading-text">正在聆听你的困惑...</p>
+  </div>
+
+  <!-- Response -->
+  <div id="response-state" class="hidden">
+    <div id="response-card"></div>
+    <button id="switch-thinker">换一位思想家</button>
+    <button id="back-btn">回到星云</button>
+  </div>
+
+  <!-- Key Setup -->
+  <div id="key-setup" class="hidden">
+    <div id="key-setup-content">
+      <h2>设置 DeepSeek API Key</h2>
+      <p>你的 Key 仅存储在本地浏览器中，只会发送到 api.deepseek.com。<br>
+      前往 <a href="https://platform.deepseek.com" target="_blank" style="color:var(--gold-dim)">platform.deepseek.com</a> 获取。</p>
+      <input id="api-key-input" type="password" placeholder="sk-...">
+      <button id="save-key">保存</button>
+      <p id="key-error" style="color:#c06050;font-size:12px;margin-top:12px;display:none"></p>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <a href="#" id="change-key-link">更换 API Key</a>
+</footer>
+
+<script src="quotes-data.js"></script>
+<script>
+// ===== STATE =====
+const STORAGE_KEY = 'pw-api-key';
+let currentConfusion = '';
+let excludedThinkers = [];
+
+// ===== PARTICLES =====
+function createParticles(){
+  const c=document.getElementById('particles');
+  c.innerHTML='';
+  for(let i=0;i<6;i++){
+    const p=document.createElement('div');
+    p.className='particle';
+    p.style.cssText=`left:${10+Math.random()*80}%;bottom:${Math.random()*30}%;width:${1+Math.random()*2}px;height:${1+Math.random()*2}px;background:rgba(200,170,120,0.4);animation-delay:${Math.random()*3}s;animation-duration:${4+Math.random()*5}s`;
+    c.appendChild(p);
+  }
+}
+
+// ===== UTILS =====
+function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
+
+// ===== DAILY QUOTE =====
+function getDailyQuote(){
+  const all=[];
+  for(const[k,a]of Object.entries(PHILOSOPHERS)){
+    for(const q of a.quotes){
+      all.push({content:q.content,original:q.original||'',originalLang:q.originalLang||'en',author:a.name});
+    }
+  }
+  const now=new Date();
+  const ds=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+  let h=0;for(let i=0;i<ds.length;i++)h=((h<<5)-h+ds.charCodeAt(i))|0;
+  return all[Math.abs(h)%all.length];
+}
+function renderDailyQuote(){
+  const q=getDailyQuote();
+  const c=document.getElementById('daily-quote');
+  const so=q.originalLang!=='zh'&&q.original&&q.original!==q.content;
+  c.innerHTML=`<p class="qt-zh">"${esc(q.content)}"</p>${so?`<p class="qt-orig">${esc(q.original)}</p>`:''}<p class="qt-auth">—— ${esc(q.author)}</p>`;
+}
+
+// ===== API KEY =====
+function getApiKey(){return localStorage.getItem(STORAGE_KEY)}
+function saveApiKey(k){localStorage.setItem(STORAGE_KEY,k.trim())}
+function showKeySetup(){
+  document.getElementById('initial-state').classList.add('hidden');
+  document.getElementById('key-setup').classList.remove('hidden');
+  document.getElementById('api-key-input').focus();
+}
+function hideKeySetup(){
+  document.getElementById('key-setup').classList.add('hidden');
+  document.getElementById('initial-state').classList.remove('hidden');
+  document.getElementById('confusion-input').focus();
+}
+function checkApiKey(){
+  if(!getApiKey()){showKeySetup();return false}
+  return true;
+}
+
+// ===== SYSTEM PROMPT =====
+function buildSystemPrompt(){
+  const profiles=Object.entries(PHILOSOPHERS).map(([k,a])=>{
+    const sq=a.quotes.slice(0,5).map(q=>`"${q.content}"`).join(' | ');
+    return `### ${a.name}（${a.nameEn}，${a.era}，${a.school}）
+母语：${a.originalLang==='de'?'德语':a.originalLang==='fr'?'法语':a.originalLang==='la'?'拉丁语':a.originalLang==='grc'?'古希腊语':a.originalLang==='pi'?'巴利语':'中文'}
+核心思想：${a.core}
+话语风格：${a.style}
+代表语录：${sq}`;
+  }).join('\n\n');
+
+  return `你是一座思想图书馆的守护者。用户会向你倾诉困惑，你必须完成以下任务：
+
+## 任务
+1. 分析困惑的哲学本质——找到问题底层的存在困境，而非表面症状
+2. 从下面 18 位思想家中选择最能刺穿这个问题的 1 位
+3. 从该思想家的真实语录中选取最契合的一句（给出中文译文 + 母语原文）
+4. 按 D 模式三步结构回应
+
+## 思想家档案
+${profiles}
+
+## D 模式回应规范
+你必须严格按以下 JSON 格式返回，不得有任何其他文字：
+
+{
+  "thinker": {"key": "英文key", "name": "中文名", "era": "年代", "school": "学派"},
+  "quote": "中文译文（意译，保持哲学深度和锋利感）",
+  "quoteOriginal": "母语原文（必须真实准确，不可编造！德语用德语，法语用法语，拉丁语用拉丁语，中文思想家则与quote相同）",
+  "quoteLang": "de/fr/la/grc/zh/pi",
+  "诊断": "锋利的诊断（150字内）。不要任何安慰，像一面镜子让用户看见自己不愿承认的东西。直接说破问题的残酷本质。不要用'我理解你的感受'这种话。",
+  "转念": "框架颠覆（150字内）。用该思想家的一个核心概念，给用户一个完全意想不到的视角来重新框定问题。让用户产生'原来可以这样看'的豁然感。",
+  "行动": "行动指引（100字内）。不是空洞的'加油'，而是该思想家会建议的具体思维练习、行为实验或视角转换。今天就能做。"
+}
+
+## 母语要求
+- 德语思想家（尼采/海德格尔/黑格尔/马克思/恩格斯/康德/叔本华）→ 用德语原文
+- 法语思想家（萨特/加缪）→ 用法语原文
+- 拉丁语思想家（马可·奥勒留/塞涅卡/爱比克泰德）→ 用拉丁语原文
+- 古希腊语（柏拉图）→ 用古希腊语原文
+- 中文思想家（孔子/老子/孙子/毛泽东）→ quoteOriginal与quote相同
+- 佛陀 → 用巴利语原文
+
+## 核心铁律
+- 不要鸡汤。不要安慰。不要共情。
+- 要锋利。要诚实。要有哲学深度。
+- 不要编造语录！如果你不确定某句原文，就选你确定的那句。
+- 用思想家的核心概念来操作，不是用泛泛的"智慧"。
+- 每句话都应该让用户感到被刺了一下，而不是被摸了一下头。`;
+}
+
+// ===== API CALL =====
+async function callDeepSeek(confusion, excluded){
+  const apiKey=getApiKey();
+  if(!apiKey){showKeySetup();throw new Error('API key not set')}
+
+  let sysPrompt=buildSystemPrompt();
+  if(excluded&&excluded.length>0){
+    sysPrompt+=`\n\n## 排除\n用户已看过以下思想家的回应，请选择其他思想家：${excluded.join('、')}`;
+  }
+
+  const resp=await fetch('https://api.deepseek.com/v1/chat/completions',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},
+    body:JSON.stringify({
+      model:'deepseek-chat',max_tokens:1200,temperature:0.7,
+      messages:[{role:'system',content:sysPrompt},{role:'user',content:confusion}]
+    })
+  });
+
+  if(!resp.ok){
+    const err=await resp.json().catch(()=>({}));
+    throw new Error(err.error?.message||`API error: ${resp.status}`);
+  }
+
+  const data=await resp.json();
+  const text=data.choices[0].message.content;
+  // Parse JSON from response (handle markdown code blocks)
+  let json=text.replace(/```json\s*/g,'').replace(/```\s*/g,'').trim();
+  // Fix common JSON issues
+  json=json.replace(/，/g,'，').replace(/\n/g,'\\n');
+  try{return JSON.parse(text.replace(/```json\s*/g,'').replace(/```\s*/g,'').trim())}
+  catch(e){
+    // Try to extract JSON object
+    const m=text.match(/\{[\s\S]*\}/);
+    if(m) return JSON.parse(m[0]);
+    throw new Error('Failed to parse JSON from response: '+text.substring(0,200));
+  }
+}
+
+async function callDeepSeekWithRetry(confusion, excluded, retries=2){
+  for(let i=0;i<=retries;i++){
+    try{return await callDeepSeek(confusion, excluded)}
+    catch(err){
+      if(i===retries) throw err;
+      await new Promise(r=>setTimeout(r,1500*(i+1)));
+    }
+  }
+}
+
+// ===== STATE MANAGEMENT =====
+function showLoading(){
+  document.getElementById('initial-state').classList.add('hidden');
+  document.getElementById('response-state').classList.add('hidden');
+  document.getElementById('loading-state').classList.remove('hidden');
+}
+function showResponse(){
+  document.getElementById('loading-state').classList.add('hidden');
+  document.getElementById('response-state').classList.remove('hidden');
+}
+function showInitial(){
+  document.getElementById('loading-state').classList.add('hidden');
+  document.getElementById('response-state').classList.add('hidden');
+  document.getElementById('initial-state').classList.remove('hidden');
+  document.getElementById('confusion-input').focus();
+  renderDailyQuote();
+}
+
+function renderResponse(data){
+  const card=document.getElementById('response-card');
+  const so=data.quoteOriginal&&data.quoteLang!=='zh'&&data.quoteOriginal!==data.quote;
+  card.innerHTML=`
+    <div class="rsp-thinker">
+      <div class="rsp-name">${esc(data.thinker.name)} 对你这样说</div>
+      <div class="rsp-meta">${esc(data.thinker.era)} · ${esc(data.thinker.school)}</div>
+    </div>
+    <div class="rsp-quote">
+      <p class="qt-zh">"${esc(data.quote)}"</p>
+      ${so?`<p class="qt-orig">${esc(data.quoteOriginal)}</p>`:''}
+    </div>
+    <div class="rsp-section"><h3>诊断</h3><p>${esc(data.诊断||'')}</p></div>
+    <div class="rsp-section"><h3>转念</h3><p>${esc(data.转念||'')}</p></div>
+    <div class="rsp-section"><h3>行动</h3><p>${esc(data.行动||'')}</p></div>`;
+  card.style.animation='none';card.offsetHeight;
+  card.style.animation='fadeIn .8s ease-out forwards';
+}
+
+// ===== LOADING ANIMATION =====
+const LOADING_PHRASES=['正在聆听你的困惑...','在人类思想的星河中寻找...','一位智者正在沉思...','真理正在浮现...'];
+function startLoadingAnim(){
+  const el=document.getElementById('loading-text');
+  el.textContent=LOADING_PHRASES[0];
+  let i=0;
+  const iv=setInterval(()=>{i++;if(i<LOADING_PHRASES.length){el.textContent=LOADING_PHRASES[i]}},2000);
+  return iv;
+}
+
+// ===== MAIN FLOW =====
+async function handleSubmit(){
+  const input=document.getElementById('confusion-input');
+  const confusion=input.value.trim();
+  if(!confusion) return;
+  if(!checkApiKey()) return;
+
+  currentConfusion=confusion;
+  excludedThinkers=[];
+  input.value='';
+
+  showLoading();
+  const iv=startLoadingAnim();
+
+  try{
+    const result=await callDeepSeekWithRetry(confusion,[]);
+    clearInterval(iv);
+    document.getElementById('loading-text').textContent=`已豁然——${result.thinker.name}回应`;
+    await new Promise(r=>setTimeout(r,800));
+    excludedThinkers.push(result.thinker.key);
+    renderResponse(result);
+    showResponse();
+  }catch(err){
+    clearInterval(iv);
+    console.error(err);
+    document.getElementById('response-card').innerHTML=`
+      <div class="error-state">
+        <p>思虑未通，请稍后再试。</p>
+        <p style="font-size:12px;color:rgba(255,255,255,.2)">${esc(err.message)}</p>
+        <button onclick="showInitial()">返回重试</button>
+      </div>`;
+    showResponse();
+    document.getElementById('switch-thinker').classList.add('hidden');
+  }
+}
+
+async function handleSwitchThinker(){
+  if(!currentConfusion) return;
+  showLoading();
+  const iv=startLoadingAnim();
+  try{
+    const result=await callDeepSeekWithRetry(currentConfusion, excludedThinkers);
+    clearInterval(iv);
+    document.getElementById('loading-text').textContent=`已豁然——${result.thinker.name}回应`;
+    await new Promise(r=>setTimeout(r,600));
+    excludedThinkers.push(result.thinker.key);
+    renderResponse(result);
+    showResponse();
+  }catch(err){
+    clearInterval(iv);
+    alert('暂无其他思想家回应，请稍后再试。\n\n'+err.message);
+    showResponse();
+  }
+}
+
+// ===== EVENT BINDINGS =====
+document.getElementById('confusion-input').addEventListener('keydown',e=>{
+  if(e.key==='Enter') handleSubmit();
+});
+document.getElementById('switch-thinker').addEventListener('click',handleSwitchThinker);
+document.getElementById('back-btn').addEventListener('click',showInitial);
+document.getElementById('save-key').addEventListener('click',()=>{
+  const input=document.getElementById('api-key-input');
+  const key=input.value.trim();
+  if(!key.startsWith('sk-')){
+    document.getElementById('key-error').textContent='Key 格式应为 sk- 开头';
+    document.getElementById('key-error').style.display='block';
+    return;
+  }
+  document.getElementById('key-error').style.display='none';
+  saveApiKey(key);
+  hideKeySetup();
+});
+document.getElementById('api-key-input').addEventListener('keydown',e=>{
+  if(e.key==='Enter') document.getElementById('save-key').click();
+});
+document.getElementById('change-key-link').addEventListener('click',e=>{
+  e.preventDefault();showKeySetup();
+});
+
+// ===== INIT =====
+document.addEventListener('DOMContentLoaded',()=>{
+  createParticles();
+  renderDailyQuote();
+  checkApiKey();
+  // Refresh daily quote at midnight
+  const now=new Date();
+  const msToMidnight=new Date(now.getFullYear(),now.getMonth(),now.getDate()+1).getTime()-now.getTime();
+  setTimeout(()=>{renderDailyQuote();setInterval(renderDailyQuote,86400000)},msToMidnight+1000);
+});
+</script>
+</body>
+</html>
