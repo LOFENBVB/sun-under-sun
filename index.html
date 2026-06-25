@@ -692,12 +692,17 @@ async function callAPI(messages, retries=2){
 }
 
 function parseJSON(text){
-  let t=text.replace(/```json\s*/g,'').replace(/```\s*/g,'').trim();
-  try{return JSON.parse(t)}
-  catch(e){
-    const m=t.match(/\{[\s\S]*\}/);
-    if(m) return JSON.parse(m[0]);
-    throw new Error('JSON parse failed: '+t.substring(0,200));
+  let t=text.replace(/```json\s*/gi,'').replace(/```\s*/gi,'').trim();
+  const s=t.indexOf('{'), e=t.lastIndexOf('}');
+  if(s>=0&&e>s) t=t.substring(s,e+1);
+  try{return JSON.parse(t)}catch(e1){
+    try{
+      // Fix unescaped newlines in string values
+      const f=t.replace(/"([^"]*)"/g,(_,v)=>'"'+v.replace(/[\n\r]/g,'\\n')+'"');
+      return JSON.parse(f);
+    }catch(e2){
+      throw new Error('JSON parse failed: '+t.substring(0,250));
+    }
   }
 }
 
@@ -722,6 +727,7 @@ async function handleSubmit(){
       {role:'user',content:confusion}
     ]);
     addTokens(resp.usage);
+    console.log('API raw response:', resp.text.substring(0,300));
     const result=parseJSON(resp.text);
     clearInterval(iv);
     document.getElementById('loading-text').textContent=`已豁然——${result.thinker.name}回应`;
