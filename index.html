@@ -51,7 +51,7 @@ body::before{
 #daily-quote .qt-zh{font-size:15px;color:rgba(210,190,160,.5);font-style:italic;line-height:1.8}
 #daily-quote .qt-orig{font-size:11px;color:rgba(210,190,160,.28);font-style:italic;line-height:1.6;margin-top:4px}
 #daily-quote .qt-auth{font-size:12px;color:rgba(210,190,160,.3);margin-top:8px}
-#draw-btn{display:inline-block;margin-top:10px;font-size:11px;color:rgba(210,185,140,.2);cursor:pointer;background:none;border:none;font-family:var(--font);transition:all .3s}
+#draw-btn{display:inline-block;margin-top:10px;font-size:14px;color:rgba(210,185,140,.25);cursor:pointer;background:none;border:none;font-family:var(--font);transition:all .3s;letter-spacing:2px}
 #draw-btn:hover{color:var(--gold-dim)}
 #draw-label{font-size:10px;color:rgba(210,185,140,.18);margin-bottom:4px;display:none}
 #input-wrap{position:relative;width:420px;max-width:90vw}
@@ -168,6 +168,7 @@ body::before{
 footer{position:fixed;bottom:16px;right:24px;z-index:10;display:flex;gap:20px;align-items:center}
 footer a{font-size:11px;color:rgba(255,255,255,.22);text-decoration:none;transition:color .3s}
 footer a:hover{color:rgba(255,255,255,.4)}
+#version-number{font-size:10px;color:rgba(255,255,255,.12);letter-spacing:1px}
 
 /* ===== ERROR ===== */
 .error-state{text-align:center;color:var(--text-dim);padding:40px}
@@ -378,6 +379,7 @@ footer a:hover{color:rgba(255,255,255,.4)}
 </div>
 
 <footer>
+  <span id="version-number">v1.1</span>
   <a href="#" id="key-indicator" class="key-indicator" onclick="event.preventDefault();showKeySetup()">⚡ Key 未设置</a>
 </footer>
 
