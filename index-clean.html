@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>太阳底下无新事</title>
+<style>
+:root {
+  --bg: #0a0a14;
+  --gold: rgba(210,185,140,1);
+  --gold-dim: rgba(210,185,140,0.6);
+  --gold-subtle: rgba(210,185,140,0.16);
+  --gold-glow: rgba(210,185,140,0.1);
+  --text: #e0d8c8;
+  --text-dim: rgba(210,185,140,0.55);
+  --text-hint: rgba(255,255,255,0.28);
+  --border: rgba(255,255,255,0.12);
+  --border-focus: rgba(210,185,140,0.35);
+  --font: 'Georgia','Noto Serif SC','SimSun',serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  background:var(--bg); color:var(--text); font-family:var(--font);
+  min-height:100vh; overflow-x:hidden;
+}
+body::before{
+  content:''; position:fixed; inset:0;
+  background:radial-gradient(ellipse at 50% 40%,#1a1a30 0%,#0a0a14 60%);
+  pointer-events:none; z-index:0;
+}
+.hidden{display:none!important}
+.fade-in{animation:fadeIn .6s ease-out forwards}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* ===== ORB ===== */
+#orb{width:180px;height:180px;border-radius:50%;background:radial-gradient(circle at 40% 35%,var(--gold-subtle) 0%,rgba(200,170,120,.03) 40%,transparent 70%);position:relative;margin:0 auto;animation:breathe 4s ease-in-out infinite}
+#orb::before{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:80px;height:80px;border-radius:50%;background:radial-gradient(circle,rgba(200,170,120,.2) 0%,transparent 60%);animation:pulse 3s ease-in-out infinite}
+#orb::after{content:'';position:absolute;top:-30px;left:-30px;right:-30px;bottom:-30px;border-radius:50%;border:1px solid rgba(200,170,120,.06);animation:halo 5s linear infinite}
+@keyframes breathe{0%,100%{transform:scale(1);opacity:.8}50%{transform:scale(1.08);opacity:1}}
+@keyframes pulse{0%,100%{transform:translate(-50%,-50%) scale(1);opacity:.5}50%{transform:translate(-50%,-50%) scale(1.3);opacity:.8}}
+@keyframes halo{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+
+/* ===== LAYOUT ===== */
+#app{position:relative;z-index:1}
+.page{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:40px 24px}
+.sect-title{font-size:14px;letter-spacing:6px;color:var(--text-dim);margin-bottom:32px;text-align:center}
+
+/* ===== INITIAL ===== */
+#initial-state #orb{margin-bottom:40px}
+#daily-quote{text-align:center;margin-bottom:28px;max-width:460px}
+#daily-quote .qt-zh{font-size:15px;color:rgba(210,190,160,.5);font-style:italic;line-height:1.8}
+#daily-quote .qt-orig{font-size:11px;color:rgba(210,190,160,.28);font-style:italic;line-height:1.6;margin-top:4px}
+#daily-quote .qt-auth{font-size:12px;color:rgba(210,190,160,.3);margin-top:8px}
+#draw-btn{display:inline-block;margin-top:10px;font-size:11px;color:rgba(210,185,140,.2);cursor:pointer;background:none;border:none;font-family:var(--font);transition:all .3s}
+#draw-btn:hover{color:var(--gold-dim)}
+#draw-label{font-size:10px;color:rgba(210,185,140,.18);margin-bottom:4px;display:none}
+#input-wrap{position:relative;width:420px;max-width:90vw}
+.input-row{display:flex;gap:10px;align-items:center}
+#confusion-input{flex:1;padding:18px 24px;background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:12px;color:var(--text);font-size:15px;font-family:var(--font);outline:none;transition:all .4s}
+#confusion-input:focus{border-color:var(--border-focus);background:rgba(255,255,255,.08);box-shadow:0 0 40px var(--gold-glow)}
+#confusion-input::placeholder{color:var(--text-hint);font-style:italic}
+.submit-btn{
+  width:48px;height:48px;border-radius:12px;flex-shrink:0;
+  background:rgba(210,185,140,.08);border:1px solid rgba(210,185,140,.2);
+  color:var(--gold-dim);font-size:20px;font-family:var(--font);
+  cursor:pointer;transition:all .3s;display:flex;align-items:center;justify-content:center;
+}
+.submit-btn:hover{background:rgba(210,185,140,.15);border-color:rgba(210,185,140,.4);color:var(--gold)}
+#input-hint{margin-top:14px;font-size:12px;color:var(--text-hint);text-align:center}
+/* ===== LOADING ===== */
+#loading-orb{width:60px;height:60px;border-radius:50%;background:radial-gradient(circle,rgba(200,170,120,.15) 0%,transparent 70%);animation:loadBreathe 1.5s ease-in-out infinite;margin-bottom:32px}
+@keyframes loadBreathe{0%,100%{transform:scale(.8);opacity:.3}50%{transform:scale(1.3);opacity:.8}}
+#loading-text{font-size:13px;color:var(--text-dim);animation:loadPulse 2s ease-in-out infinite}
+@keyframes loadPulse{0%,100%{opacity:.3}50%{opacity:.7}}
+
+/* ===== RESPONSE CARD ===== */
+#response-card{max-width:560px;width:100%}
+.rsp-thinker{text-align:center;margin-bottom:28px}
+.rsp-thinker .rsp-name{font-size:20px;color:var(--gold-dim);letter-spacing:2px}
+.rsp-thinker .rsp-meta{font-size:11px;color:var(--text-dim);margin-top:4px}
+.rsp-quote{text-align:center;padding:24px 0;margin-bottom:28px;border-top:1px solid rgba(255,255,255,.05);border-bottom:1px solid rgba(255,255,255,.05)}
+.rsp-quote .qt-zh{font-size:17px;font-style:italic;line-height:1.8;color:var(--text);margin-bottom:6px}
+.rsp-quote .qt-orig{font-size:13px;font-style:italic;line-height:1.6;color:rgba(200,180,150,.22)}
+.rsp-section{margin-bottom:24px}
+.rsp-section h3{font-size:12px;letter-spacing:4px;color:var(--gold-dim);margin-bottom:10px;font-weight:normal}
+.rsp-section p{font-size:14px;line-height:1.9;color:#b0a898}
+.action-row{display:flex;gap:16px;justify-content:center;margin-top:36px;flex-wrap:wrap}
+.btn{
+  padding:10px 28px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);
+  border-radius:20px;color:rgba(255,255,255,.7);font-family:var(--font);font-size:14px;
+  cursor:pointer;transition:all .3s;
+}
+.btn:hover{border-color:rgba(210,185,140,.4);color:var(--gold)}
+.btn-primary{background:rgba(210,185,140,.12);border-color:rgba(210,185,140,.3);color:var(--gold-dim)}
+.btn-primary:hover{background:rgba(210,185,140,.2);border-color:rgba(210,185,140,.5);color:var(--gold)}
+.btn-mini{padding:8px 18px;font-size:12px}
+
+/* ===== CHAT ===== */
+#chat-state{flex-direction:column;align-items:stretch;min-height:100vh;padding:0}
+.chat-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:16px 20px;border-bottom:1px solid rgba(255,255,255,.05);
+  position:sticky;top:0;z-index:10;background:rgba(5,5,8,.92);
+  backdrop-filter:blur(10px);
+}
+.chat-header .ch-name{font-size:15px;color:var(--gold-dim);letter-spacing:2px}
+.chat-header .ch-back{font-size:12px;color:var(--text-dim);cursor:pointer;background:none;border:none;font-family:var(--font);transition:color .3s}
+.chat-header .ch-back:hover{color:var(--gold)}
+.chat-body{flex:1;overflow-y:auto;padding:20px 16px 100px;display:flex;flex-direction:column;gap:16px;max-width:640px;width:100%;margin:0 auto}
+.chat-bubble{max-width:82%;padding:14px 18px;border-radius:16px;font-size:14px;line-height:1.7;animation:fadeIn .3s ease-out}
+.chat-bubble.thinker{align-self:flex-start;background:rgba(210,185,140,.1);border:1px solid rgba(210,185,140,.15);border-bottom-left-radius:4px;color:#d8d0c0}
+.chat-bubble.user{align-self:flex-end;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-bottom-right-radius:4px;color:#c0c0c0}
+.chat-input-bar{
+  position:fixed;bottom:0;left:50%;transform:translateX(-50%);
+  width:100%;max-width:640px;padding:12px 16px 20px;
+  background:linear-gradient(0deg,rgba(5,5,8,.95) 60%,transparent 100%);
+  display:flex;gap:10px;z-index:10;
+}
+.chat-input-bar input{
+  flex:1;padding:14px 18px;background:rgba(255,255,255,.04);
+  border:1px solid var(--border);border-radius:24px;color:var(--text);
+  font-size:14px;font-family:var(--font);outline:none;transition:all .3s;
+}
+.chat-input-bar input:focus{border-color:var(--border-focus);background:rgba(255,255,255,.06)}
+.chat-input-bar input::placeholder{color:var(--text-hint)}
+.chat-input-bar button{
+  padding:10px 20px;background:rgba(200,170,120,.08);border:1px solid rgba(200,170,120,.15);
+  border-radius:24px;color:var(--gold-dim);font-family:var(--font);font-size:13px;
+  cursor:pointer;transition:all .3s;white-space:nowrap;
+}
+.chat-input-bar button:hover{background:rgba(200,170,120,.15);color:var(--gold)}
+.chat-typing{align-self:flex-start;padding:12px 18px;color:var(--text-dim);font-size:13px;font-style:italic}
+.chat-token{align-self:flex-end;font-size:10px;color:rgba(255,255,255,.18);padding:4px 8px;margin-top:4px}
+
+/* ===== HISTORY ===== */
+#history-btn{position:fixed;top:16px;right:24px;z-index:10;font-size:12px;color:var(--text-dim);cursor:pointer;background:none;border:none;font-family:var(--font);transition:color .3s}
+#history-btn:hover{color:var(--gold-dim)}
+#history-panel{position:fixed;top:0;right:0;bottom:0;width:100%;max-width:380px;background:rgba(8,8,16,.96);backdrop-filter:blur(20px);z-index:50;border-left:1px solid rgba(255,255,255,.06);display:flex;flex-direction:column;transform:translateX(100%);transition:transform .3s ease-out}
+#history-panel.open{transform:translateX(0)}
+#history-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:49;display:none}
+#history-overlay.show{display:block}
+.history-header{padding:20px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;justify-content:space-between;align-items:center}
+.history-header h3{font-size:14px;color:var(--gold-dim);font-weight:normal;letter-spacing:2px}
+.history-header button{font-size:20px;color:var(--text-dim);cursor:pointer;background:none;border:none;font-family:var(--font)}
+.history-list{flex:1;overflow-y:auto;padding:16px}
+.history-item{padding:16px;margin-bottom:12px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.05);border-radius:10px;cursor:pointer;transition:all .3s}
+.history-item:hover{background:rgba(255,255,255,.06);border-color:rgba(210,185,140,.15)}
+.history-item .hi-date{font-size:10px;color:var(--text-hint);margin-bottom:6px}
+.history-item .hi-confusion{font-size:13px;color:var(--text);line-height:1.6;margin-bottom:8px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.history-item .hi-thinker{font-size:11px;color:var(--gold-dim)}
+.history-empty{text-align:center;padding:40px 20px;color:var(--text-hint);font-size:13px}
+
+/* ===== KEY SETUP ===== */
+#key-setup-content{text-align:center;max-width:360px;padding:40px}
+#key-setup-content h2{font-size:18px;color:var(--text);font-weight:normal;margin-bottom:12px}
+#key-setup-content p{font-size:12px;color:var(--text-dim);margin-bottom:24px;line-height:1.6}
+#key-setup-content a{color:var(--gold-dim)}
+#api-key-input{width:100%;padding:14px 18px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--font);font-size:14px;outline:none;transition:all .3s;margin-bottom:16px}
+#api-key-input:focus{border-color:var(--border-focus);box-shadow:0 0 30px var(--gold-glow)}
+#save-key{padding:10px 32px;background:rgba(200,170,120,.08);border:1px solid rgba(200,170,120,.2);border-radius:8px;color:var(--gold-dim);font-family:var(--font);font-size:14px;cursor:pointer;transition:all .3s}
+#save-key:hover{background:rgba(200,170,120,.15);border-color:rgba(200,170,120,.4);color:var(--gold)}
+#provider-tabs{display:flex;gap:8px;margin-bottom:16px;justify-content:center}
+.prov-tab{padding:6px 16px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:16px;color:var(--text-dim);font-family:var(--font);font-size:12px;cursor:pointer;transition:all .3s}
+.prov-tab:hover{border-color:rgba(210,185,140,.3);color:var(--gold-dim)}
+.prov-tab.active{background:rgba(210,185,140,.1);border-color:rgba(210,185,140,.3);color:var(--gold-dim)}
+
+/* ===== FOOTER ===== */
+footer{position:fixed;bottom:16px;right:24px;z-index:10;display:flex;gap:20px;align-items:center}
+footer a{font-size:11px;color:rgba(255,255,255,.22);text-decoration:none;transition:color .3s}
+footer a:hover{color:rgba(255,255,255,.4)}
+
+/* ===== ERROR ===== */
+.error-state{text-align:center;color:var(--text-dim);padding:40px}
+.error-state p{margin-bottom:16px}
+.error-state button{padding:8px 24px;background:transparent;border:1px solid var(--border);border-radius:20px;color:var(--text-dim);font-family:var(--font);cursor:pointer}
+.error-state button:hover{border-color:var(--gold-dim);color:var(--gold-dim)}
+
+/* ===== PARTICLE ===== */
+.particle{position:fixed;border-radius:50%;pointer-events:none;z-index:0;animation:floatUp 6s ease-in infinite}
+@keyframes floatUp{0%{transform:translateY(0) scale(0);opacity:0}20%{opacity:.6}80%{opacity:.1}100%{transform:translateY(-60vh) scale(1.5);opacity:0}}
+
+@media(max-width:600px){
+  #orb{width:120px;height:120px}
+  #orb::before{width:50px;height:50px}
+  #orb::after{top:-18px;left:-18px;right:-18px;bottom:-18px}
+  .sect-title{font-size:11px;letter-spacing:4px}
+  #daily-quote .qt-zh{font-size:14px}
+  #daily-quote .qt-orig{font-size:10px}
+  #confusion-input{font-size:16px;padding:16px 18px}
+  .rsp-quote .qt-zh{font-size:16px}
+  .rsp-quote .qt-orig{font-size:12px}
+  .submit-btn{width:44px;height:44px;border-radius:10px;font-size:18px}
+  .input-row{gap:8px}
+  .chat-bubble{max-width:92%}
+  .chat-bubble.thinker{font-size:14px;padding:12px 15px}
+  .chat-bubble.user{font-size:14px;padding:12px 15px}
+  .chat-header{padding:12px 16px}
+  .chat-header .ch-name{font-size:14px}
+  .chat-input-bar{
+    padding:10px 12px max(20px,env(safe-area-inset-bottom));
+  }
+  .chat-input-bar input{font-size:16px;padding:12px 16px}
+  .chat-body{padding:16px 12px 120px}
+  .rsp-section p{font-size:14px}
+  .btn{font-size:12px;padding:10px 22px}
+  #response-card{padding:0 8px}
+  footer{bottom:max(12px,env(safe-area-inset-bottom))}
+  .welcome-card{padding:24px 18px;max-height:90vh}
+  .welcome-card h2{font-size:17px}
+  .welcome-sub{font-size:12px}
+  .welcome-section p{font-size:11px}
+  .welcome-btn{padding:12px 36px;font-size:14px}
+}
+
+/* Welcome Modal */
+.welcome-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:999;
+  display:flex;align-items:center;justify-content:center;
+  padding:20px;backdrop-filter:blur(8px);
+}
+.welcome-card{
+  background:rgba(15,15,25,.95);border:1px solid rgba(255,255,255,.1);
+  border-radius:16px;max-width:500px;width:100%;max-height:85vh;
+  overflow-y:auto;padding:32px 28px;text-align:center;
+  animation:fadeIn .5s ease-out;
+}
+.welcome-orb{
+  width:60px;height:60px;border-radius:50%;
+  background:radial-gradient(circle at 40% 35%,var(--gold-subtle) 0%,transparent 70%);
+  margin:0 auto 20px;animation:breathe 4s ease-in-out infinite;
+}
+.welcome-card h2{font-size:20px;color:var(--gold-dim);font-weight:normal;letter-spacing:4px;margin-bottom:8px}
+.welcome-sub{font-size:13px;color:var(--text-dim);margin-bottom:24px;line-height:1.6}
+.welcome-body{text-align:left;margin-bottom:24px}
+.welcome-section{margin-bottom:18px}
+.welcome-section h4{font-size:13px;color:var(--gold-dim);margin-bottom:6px;font-weight:normal}
+.welcome-section p{font-size:12px;color:#b0a898;line-height:1.7}
+.welcome-tip p{font-size:11px;color:var(--text-dim);line-height:1.6}
+.welcome-tip a{color:var(--gold-dim)}
+.welcome-btn{
+  padding:12px 48px;background:rgba(210,185,140,.1);
+  border:1px solid rgba(210,185,140,.3);border-radius:24px;
+  color:var(--gold-dim);font-family:var(--font);font-size:15px;
+  cursor:pointer;transition:all .3s;
+}
+.welcome-btn:hover{background:rgba(210,185,140,.2);border-color:var(--gold-dim);color:var(--gold)}
+.welcome-footer{margin-top:20px;padding-top:16px;border-top:1px solid rgba(255,255,255,.06)}
+.welcome-author{font-size:16px;color:var(--gold-dim);letter-spacing:4px;margin-bottom:6px}
+.welcome-github{display:inline-block;font-size:11px;color:rgba(255,255,255,.2);text-decoration:none;transition:color .3s;margin-bottom:8px}
+.welcome-github:hover{color:var(--gold-dim)}
+.welcome-thanks{font-size:10px;color:rgba(255,255,255,.1)}
+.welcome-updater{font-size:10px;color:rgba(255,255,255,.12);margin-top:2px}
+.welcome-changelog{text-align:left}
+.changelog-list p{font-size:11px;color:rgba(255,255,255,.2);line-height:1.7}
+.changelog-list p span{color:rgba(210,185,140,.3);margin-right:8px;font-size:10px}
+
+</style>
+<meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
+</head>
+<body>
+
+<div id="particles"></div>
+<div id="app">
+
+  <!-- ===== INITIAL ===== -->
+  <div id="initial-state" class="page">
+    <div id="orb"></div>
+    <div class="sect-title">太 阳 底 下 无 新 事</div>    <button id="history-btn" onclick="openHistory()">历史记录</button>
+    <div id="daily-quote">
+      <div id="draw-label"></div>
+      <div id="quote-content"></div>
+    </div>
+    <button id="draw-btn" onclick="drawRandom()">✨ 抽一张</button>
+    <div id="input-wrap">
+      <div class="input-row">
+        <input id="confusion-input" type="text" placeholder="输入你的困惑..." autofocus>
+        <button id="submit-btn" class="submit-btn">→</button>
+      </div>
+      <div id="input-hint">按下回车或点击箭头</div>
+    </div>
+  </div>
+
+  <!-- ===== LOADING ===== -->
+  <div id="loading-state" class="page hidden">
+    <div id="loading-orb"></div>
+    <p id="loading-text">正在聆听你的困惑...</p>
+  </div>
+
+  <!-- ===== RESPONSE ===== -->
+  <div id="response-state" class="page hidden">
+    <div id="response-card"></div>
+    <div class="action-row">
+      <button id="continue-chat" class="btn btn-primary">继续对话 · 深入探讨</button>
+      <button id="switch-thinker" class="btn">换一位思想家</button>
+    </div>
+    <span class="token-spot" style="font-size:10px;color:rgba(255,255,255,.18);margin-top:16px"></span>
+    <button id="back-btn" class="btn btn-mini" style="margin-top:12px">回到星云</button>
+  </div>
+
+  <!-- ===== CHAT ===== -->
+  <div id="chat-state" class="page hidden">
+    <div class="chat-header">
+      <span class="ch-name"></span>
+      <button class="ch-back" id="chat-back">← 返回星云</button>
+    </div>
+    <div class="chat-body" id="chat-body">
+      <div id="chat-token" class="chat-token"></div>
+    </div>
+    <div class="chat-input-bar">
+      <input id="chat-input" type="text" placeholder="继续追问...">
+      <button id="chat-send">发送</button>
+    </div>
+  </div>
+
+  <!-- ===== HISTORY PANEL ===== -->
+  <div id="history-overlay" onclick="closeHistory()"></div>
+  <div id="history-panel">
+    <div class="history-header">
+      <h3>思想记录</h3>
+      <button onclick="closeHistory()">×</button>
+    </div>
+    <div class="history-list" id="history-list"></div>
+  </div>
+
+  <!-- ===== KEY SETUP ===== -->
+  <div id="key-setup" class="page hidden">
+    <div id="key-setup-content">
+      <h2>设置 API Key</h2>
+      <div id="provider-tabs">
+        <button class="prov-tab active" data-prov="deepseek">DeepSeek</button>
+        <button class="prov-tab" data-prov="openai">OpenAI</button>
+        <button class="prov-tab" data-prov="anthropic">Claude</button>
+      </div>
+      <p id="key-desc">Key 仅存本地浏览器，只发往所选 API。<br>前往 <a id="key-link" href="https://platform.deepseek.com" target="_blank">platform.deepseek.com</a> 获取。</p>
+      <input id="api-key-input" type="password" placeholder="sk-...">
+      <button id="save-key">保存</button>
+      <button id="clear-key" style="margin-top:8px;padding:6px 16px;background:transparent;border:none;color:rgba(255,255,255,.12);font-family:var(--font);font-size:11px;cursor:pointer">清除 Key</button>
+      <p id="key-error" style="color:#c06050;font-size:12px;margin-top:12px;display:none"></p>
+    </div>
+  </div>
+
+</div>
+
+<!-- ===== WELCOME MODAL ===== -->
+<div id="welcome-overlay" class="welcome-overlay">
+  <div class="welcome-card">
+    <div class="welcome-orb"></div>
+    <h2>太阳底下无新事</h2>
+    <p class="welcome-sub">人类的问题古今相通——让历史上最敏锐的思想家为你解惑</p>
+    <div class="welcome-body">
+      <div class="welcome-section">
+        <h4>💡 灵感</h4>
+        <p>公元前 300 年，芝诺在雅典广场的廊柱下回答困惑者的提问——斯多葛学派由此诞生。两千三百年后，你同样被焦虑、迷茫、内卷所困。尼采的锤子、海德格尔的向死而生、孔子的仁恕之道、毛泽东的矛盾论——这些思想从未褪色。<br><br><strong>太阳底下无新事。你遇到的问题，历史上最敏锐的头脑早已思考过。本网站汇聚 27 位中西哲学家与政治家，用他们的思想为你精准解惑。</strong></p>
+      </div>
+      <div class="welcome-section">
+        <h4>🧠 怎么用</h4>
+        <p>写下你的困惑 → AI 从 27 位思想家中自动匹配最契合的那一位 → 用他的原话刺穿问题 → 再给你颠覆性的视角重新框定一切。不满意？换一位。想深入？进入聊天模式。首页还有「✨ 抽一张」随机语录和「时代热议」社会议题入口。</p>
+      </div>
+      <div class="welcome-section welcome-tip">
+        <p>⚡ 首次使用需设置 API Key（支持 DeepSeek / OpenAI / Claude）</p>
+        <p>🔒 Key 仅存于本地浏览器，绝不外传</p>
+      </div>
+      <div class="welcome-section welcome-changelog">
+        <h4>📋 更新日志</h4>
+        <div class="changelog-list">
+          <p><span>2026.06.25</span> 首发上线：27 位思想家 · D 模式诊断 · 对话模式 · 多 API 支持 · 每日名言 · 随机抽取 · 时代热议 · 历史记录</p>
+        </div>
+      </div>
+    </div>
+    <button class="welcome-btn" onclick="closeWelcome()">开始探索</button>
+    <div class="welcome-footer">
+      <p class="welcome-author">LOFEN</p>
+      <a class="welcome-github" href="https://github.com/LOFENBVB/sun-under-sun" target="_blank">github.com/LOFENBVB/sun-under-sun</a>
+      <p class="welcome-updater">更新人：LOFEN</p>
+      <p class="welcome-thanks">感谢各位使用 🙏</p>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <a href="#" id="key-indicator" class="key-indicator" onclick="event.preventDefault();showKeySetup()">⚡ Key 未设置</a>
+</footer>
+
+<script>
+/* 哲学家语录数据库 — 2026-06-25 */
+const PHILOSOPHERS = {"nietzsche":{"name":"尼采","nameEn":"Friedrich Nietzsche","school":"存在主义","era":"1844-1900","originalLang":"de","core":"权力意志、超人哲学、上帝已死、永恒轮回","style":"炽热、诗意、颠覆。用锤子进行哲学思考，重估一切价值。","quotes":[{"content":"It is not a lack of love, but a lack of friendship that makes unhappy marriages.","original":"It is not a lack of love, but a lack of friendship that makes unhappy marriages.","originalLang":"en","tags":["Friendship"]},{"content":"There is more wisdom in your body than in your deepest philosophy.","original":"There is more wisdom in your body than in your deepest philosophy.","originalLang":"en","tags":["Wisdom"]},{"content":"Does wisdom perhaps appear on the earth as a raven which is inspired by the smell of carrion?","original":"Does wisdom perhaps appear on the earth as a raven which is inspired by the smell of carrion?","originalLang":"en","tags":["Wisdom"]},{"content":"The man of knowledge must be able not only to love his enemies but also to hate his friends.","original":"The man of knowledge must be able not only to love his enemies but also to hate his friends.","originalLang":"en","tags":["Wisdom"]},{"content":"We love life, not because we are used to living but because we are used to loving.","original":"We love life, not because we are used to living but because we are used to loving.","originalLang":"en","tags":["Famous Quotes"]},{"content":"Love is blind; friendship closes its eyes.","original":"Love is blind; friendship closes its eyes.","originalLang":"en","tags":["Friendship"]},{"content":"You need chaos in your soul to give birth to a dancing star.","original":"You need chaos in your soul to give birth to a dancing star.","originalLang":"en","tags":["Famous Quotes"]},{"content":"Rejoicing in our joy, not suffering over our suffering, makes someone a friend.","original":"Rejoicing in our joy, not suffering over our suffering, makes someone a friend.","originalLang":"en","tags":["Friendship"]},{"content":"上帝已死。而我们杀死了他。我们——所有谋杀者中最伟大的谋杀者——将如何安慰自己？","original":"Gott ist tot! Gott bleibt tot! Und wir haben ihn getötet!","tags":["虚无","价值"],"originalLang":"de"},{"content":"谁若与怪物搏斗，应当心自己在搏斗中不要变成怪物。当你长久凝视深渊，深渊也在凝视你。","original":"Wer mit Ungeheuern kämpft, mag zusehn, dass er nicht dabei zum Ungeheuer wird. Und wenn du lange in einen Abgrund blickst, blickt der Abgrund auch in dich hinein.","tags":["危险","深渊"],"originalLang":"de"},{"content":"你必须有混沌在你的内心，才能诞生一颗跳舞的星。","original":"Man muss noch Chaos in sich haben, um einen tanzenden Stern gebären zu können.","tags":["创造","混沌"],"originalLang":"de"},{"content":"人是一根绳索，架在动物和超人之间——一根悬在深渊上的绳索。","original":"Der Mensch ist ein Seil, geknüpft zwischen Tier und Übermensch — ein Seil über einem Abgrunde.","tags":["人","超越"],"originalLang":"de"},{"content":"凡不能毁灭我的，必使我更强大。","original":"Was mich nicht umbringt, macht mich stärker.","tags":["坚韧","成长"],"originalLang":"de"},{"content":"你要成为你自己。","original":"Werde, der du bist.","tags":["自我","本真"],"originalLang":"de"},{"content":"没有音乐，生活将是一个错误。","original":"Ohne Musik wäre das Leben ein Irrtum.","tags":["艺术","生活"],"originalLang":"de"}]},"heidegger":{"name":"海德格尔","nameEn":"Martin Heidegger","school":"存在主义","era":"1889-1976","originalLang":"de","core":"此在(Dasein)、向死而生、存在与时间、技术在解蔽中遮蔽","style":"晦涩深刻。追问存在的意义，揭示日常沉沦中的本真可能。","quotes":[{"content":"人是一种存在于世界之中的存在者，他不得不面对自己的存在——这便是烦（Sorge）。","original":"Das Dasein ist ein Seiendes, das sich in seinem Sein zu diesem Sein verhält — und darin liegt die Sorge.","tags":["存在","本真"],"originalLang":"de"},{"content":"向死而生。唯有直面死亡，人才有可能从常人的沉沦中抽身，走向本真的自我。","original":"Das Vorlaufen in den Tod ermöglichst allererst das eigentliche Selbstseinkönnen.","tags":["死亡","本真"],"originalLang":"de"},{"content":"语言是存在之家。人居住在语言的寓所中。","original":"Die Sprache ist das Haus des Seins. In ihrer Behausung wohnt der Mensch.","tags":["语言","存在"],"originalLang":"de"},{"content":"焦虑揭示了此在在世界之中的无家可归状态。在焦虑中，我们感到万事万物的无意义。","original":"Die Angst offenbart das Nichts. In der Angst ist einem unheimlich.","tags":["焦虑","存在"],"originalLang":"de"},{"content":"现代技术将一切存在者都变成了可供使用的持存物（Bestand）。","original":"Das Wesen der Technik ist das Ge-stell. Der Mensch steht in der Gefahr, nur noch als Bestand genommen zu werden.","tags":["技术","异化"],"originalLang":"de"},{"content":"最可思虑的是我们——在需要思想时代——尚未思想。","original":"Das Bedenklichste in unserer bedenklichen Zeit ist, dass wir noch nicht denken.","tags":["思想","时代"],"originalLang":"de"},{"content":"每个人都是他人，没有一个人是他自己。常人是此在的日常存在方式。","original":"Jeder ist der Andere und Keiner er selbst.","tags":["常人","沉沦"],"originalLang":"de"},{"content":"唯有当我们真正地追问存在的意义时，我们才真正地成为人。","original":"Die Frage nach dem Sinn des Seins ist die fundamentalste und konkreteste.","tags":["存在","意义"],"originalLang":"de"},{"content":"畏（Angst）不同于怕（Furcht）——怕总有具体的对象，而畏没有。畏让你面对的是世界本身。","original":"Das Wovor der Angst ist das In-der-Welt-sein als solches.","tags":["焦虑","存在"],"originalLang":"de"},{"content":"诗人的天职是还乡——还乡就是返回到源泉的近旁。","original":"Heimkunft ist Rückkehr in die Nähe zum Ursprung.","tags":["诗","家园"],"originalLang":"de"}]},"sartre":{"name":"萨特","nameEn":"Jean-Paul Sartre","school":"存在主义","era":"1905-1980","originalLang":"fr","core":"存在先于本质、他者即地狱、绝对自由、自欺","style":"锋利直接。人注定自由，也因此注定承担选择的全部重负。","quotes":[{"content":"Freedom is what you do with what's been done to you.","original":"Freedom is what you do with what's been done to you.","originalLang":"en","tags":["Freedom"]},{"content":"Commitment is an act, not a word.","original":"Commitment is an act, not a word.","originalLang":"en","tags":["Wisdom"]},{"content":"Man is not sum of what he has already, but rather the sum of what he does not yet have, of what he could have.","original":"Man is not sum of what he has already, but rather the sum of what he does not yet have, of what he could have.","originalLang":"en","tags":["Famous Quotes"]},{"content":"The more sand that has escaped from the hourglass of our life, the clearer we should see through it.","original":"The more sand that has escaped from the hourglass of our life, the clearer we should see through it.","originalLang":"en","tags":["Wisdom"]},{"content":"人注定是自由的。人就是自由。","original":"L'homme est condamné à être libre.","tags":["自由","责任"],"originalLang":"fr"},{"content":"他者即地狱——但这不意味着他人让我们受苦，而是他人的目光让我们无法成为自己。","original":"L'enfer, c'est les autres.","tags":["他人","存在"],"originalLang":"fr"},{"content":"存在先于本质——你先存在，然后才通过自己的选择定义自己。","original":"L'existence précède l'essence.","tags":["存在","选择"],"originalLang":"fr"},{"content":"人是自己选择的总和。","original":"L'homme est la somme de ses choix.","tags":["选择","自我"],"originalLang":"fr"},{"content":"我们是我们所不是的，而不是我们所是的。","original":"Nous sommes ce que nous ne sommes pas, et nous ne sommes pas ce que nous sommes.","tags":["存在","虚无"],"originalLang":"fr"}]},"camus":{"name":"加缪","nameEn":"Albert Camus","school":"存在主义","era":"1913-1960","originalLang":"fr","core":"荒谬、西西弗神话、反抗、局外人","style":"清醒而温柔。承认荒谬但不屈服，在无意义中创造意义。","quotes":[{"content":"In the depth of winter, I finally learned that there was within me an invincible summer.","original":"In the depth of winter, I finally learned that there was within me an invincible summer.","originalLang":"en","tags":["Famous Quotes","Inspirational"]},{"content":"All men have a sweetness in their life. That is what helps them go on. It is towards that they turn when they feel too worn out.","original":"All men have a sweetness in their life. That is what helps them go on. It is towards that they turn when they feel too worn out.","originalLang":"en","tags":["Famous Quotes"]},{"content":"You will never be happy if you continue to search for what happiness consists of. You will never live if you are looking for the meaning of life.","original":"You will never be happy if you continue to search for what happiness consists of. You will never live if you are looking for the meaning of life.","originalLang":"en","tags":["Famous Quotes","Life","Happiness"]},{"content":"Autumn is a second spring when every leaf is a flower.","original":"Autumn is a second spring when every leaf is a flower.","originalLang":"en","tags":["Famous Quotes","Nature"]},{"content":"Friendship often ends in love, but love in friendship - never.","original":"Friendship often ends in love, but love in friendship - never.","originalLang":"en","tags":["Friendship","Love"]},{"content":"Blessed are the hearts that can bend; they shall never be broken.","original":"Blessed are the hearts that can bend; they shall never be broken.","originalLang":"en","tags":["Famous Quotes"]},{"content":"真正严肃的哲学问题只有一个：自杀。判断生命是否值得活，就是回答哲学的根本问题。","original":"Il n'y a qu'un problème philosophique vraiment sérieux : c'est le suicide.","tags":["生命","荒谬"],"originalLang":"fr"},{"content":"我们必须想象西西弗是幸福的。","original":"Il faut imaginer Sisyphe heureux.","tags":["荒谬","幸福"],"originalLang":"fr"},{"content":"在荒谬的体验中，痛苦是个体的。但是从反抗开始，痛苦就成了集体的。","original":"Je me révolte, donc nous sommes.","tags":["反抗","团结"],"originalLang":"fr"},{"content":"在冬天的正中心，我最终发现在我心里有一个不可战胜的夏天。","original":"Au milieu de l'hiver, j'apprenais enfin qu'il y avait en moi un été invincible.","tags":["希望","内心"],"originalLang":"fr"}]},"hegel":{"name":"黑格尔","nameEn":"G.W.F. Hegel","school":"辩证/历史","era":"1770-1831","originalLang":"de","core":"辩证法、主奴关系、绝对精神、理性的狡计","style":"宏大系统。矛盾不是终点而是动力，真理在整体中展开。","quotes":[{"content":"凡是合乎理性的东西都是现实的；凡是现实的东西都是合乎理性的。","original":"Was vernünftig ist, das ist wirklich; und was wirklich ist, das ist vernünftig.","tags":["理性","现实"],"originalLang":"de"},{"content":"真理是全体。真理只有作为体系才是现实的。","original":"Das Wahre ist das Ganze.","tags":["真理","整体"],"originalLang":"de"},{"content":"密涅瓦的猫头鹰只有在黄昏时分才起飞。哲学对世界的反思总是来得太晚。","original":"Die Eule der Minerva beginnt erst mit der einbrechenden Dämmerung ihren Flug.","tags":["哲学","反思"],"originalLang":"de"},{"content":"主人与奴隶的辩证法：奴隶在劳动中认识到自身的力量，而主人反而变得依赖奴隶。","original":"Die Wahrheit des selbständigen Bewußtseins ist demnach das knechtische Bewußtsein.","tags":["主奴","劳动"],"originalLang":"de"},{"content":"自由是对必然的认识。只有认识了必然，意志才真正是自由的。","original":"Freiheit ist die Einsicht in die Notwendigkeit.","tags":["自由","必然"],"originalLang":"de"},{"content":"凡是存在的，必在它的概念中消逝；凡是发展的，必包含它的否定在其中。","original":"Die Knospe verschwindet in dem Hervorbrechen der Blüte.","tags":["辩证","否定"],"originalLang":"de"},{"content":"量的变化积累到一定程度，必然引起质的飞跃。","original":"Das Umschlagen von Quantität in Qualität — ein Sprung aus quantitativer Veränderung in qualitative.","tags":["量变质变","辩证"],"originalLang":"de"},{"content":"人的欲望在于被另一个欲望所承认。人是为承认而斗争的存在。","original":"Das Selbstbewußtsein ist an und für sich, indem und dadurch, dass es für ein anderes an und für sich ist.","tags":["承认","欲望"],"originalLang":"de"},{"content":"世界历史就是自由意识的进步史。","original":"Die Weltgeschichte ist der Fortschritt im Bewußtsein der Freiheit.","tags":["历史","自由"],"originalLang":"de"},{"content":"凡是现实的都是合理的——但现实不等于现存。只有符合理性必然性的现存才是现实的。","original":"Was wirklich ist, das ist vernünftig. Nicht alles, was existiert, ist wirklich.","tags":["理性","现实"],"originalLang":"de"}]},"marx":{"name":"马克思","nameEn":"Karl Marx","school":"辩证/历史","era":"1818-1883","originalLang":"de","core":"异化劳动、阶级斗争、历史唯物主义、资本批判","style":"批判性极强。揭露表象下的物质关系，哲学必须改变世界。","quotes":[{"content":"哲学家们只是用不同的方式解释世界，而问题在于改变世界。","original":"Die Philosophen haben die Welt nur verschieden interpretiert; es kömmt darauf an, sie zu verändern.","tags":["实践","改变"],"originalLang":"de"},{"content":"到目前为止的一切社会的历史都是阶级斗争的历史。","original":"Die Geschichte aller bisherigen Gesellschaft ist die Geschichte von Klassenkämpfen.","tags":["阶级","历史"],"originalLang":"de"},{"content":"不是人们的意识决定人们的存在，相反，是人们的社会存在决定人们的意识。","original":"Es ist nicht das Bewußtsein der Menschen, das ihr Sein, sondern umgekehrt ihr gesellschaftliches Sein, das ihr Bewußtsein bestimmt.","tags":["存在","意识"],"originalLang":"de"},{"content":"宗教是人民的鸦片。","original":"Die Religion ist das Opium des Volkes.","tags":["宗教","异化"],"originalLang":"de"},{"content":"每个人的自由发展是一切人自由发展的条件。","original":"Die freie Entwicklung eines Jeden ist die Bedingung für die freie Entwicklung Aller.","tags":["自由","社会"],"originalLang":"de"},{"content":"资本来到世间，从头到脚，每个毛孔都滴着血和肮脏的东西。","original":"Das Kapital kommt zur Welt, von Kopf bis Zeh, aus allen Poren, blut- und schmutztriefend.","tags":["资本","批判"],"originalLang":"de"},{"content":"物质力量只能用物质力量来摧毁；但是理论一经掌握群众，也会变成物质力量。","original":"Die Waffe der Kritik kann die Kritik der Waffen nicht ersetzen, aber die Theorie wird zur materiellen Gewalt, sobald sie die Massen ergreift.","tags":["理论","实践"],"originalLang":"de"},{"content":"人是社会关系的总和。人的本质不是单个人所固有的抽象物。","original":"Das menschliche Wesen ist kein dem einzelnen Individuum innewohnendes Abstraktum. In seiner Wirklichkeit ist es das Ensemble der gesellschaftlichen Verhältnisse.","tags":["人","社会"],"originalLang":"de"},{"content":"一个幽灵，共产主义的幽灵，在欧洲游荡。","original":"Ein Gespenst geht um in Europa — das Gespenst des Kommunismus.","tags":["共产主义","革命"],"originalLang":"de"},{"content":"在资本主义生产的条件下，工人生产的越多，他自己就越贫乏。","original":"Der Arbeiter wird um so ärmer, je mehr Reichtum er produziert.","tags":["异化","劳动"],"originalLang":"de"}]},"engels":{"name":"恩格斯","nameEn":"Friedrich Engels","school":"辩证/历史","era":"1820-1895","originalLang":"de","core":"自然辩证法、历史合力论、劳动创造人","style":"清晰透彻。将辩证唯物主义贯穿自然与社会的统一解释。","quotes":[{"content":"劳动创造了人本身。","original":"Die Arbeit hat den Menschen selbst geschaffen.","tags":["劳动","人类"],"originalLang":"de"},{"content":"自由不在于在幻想中摆脱自然规律而独立，而在于认识这些规律，从而有计划地使之为一定目的服务。","original":"Freiheit besteht nicht in der geträumten Unabhängigkeit von den Naturgesetzen, sondern in der Erkenntnis dieser Gesetze.","tags":["自由","规律"],"originalLang":"de"},{"content":"一个民族要想站在科学的最高峰，就一刻也不能没有理论思维。","original":"Ein Volk, das auf der Höhe der Wissenschaft stehen will, kann nicht ohne theoretisches Denken bestehen.","tags":["思想","科学"],"originalLang":"de"},{"content":"历史的最终结果总是从许多单个意志的相互冲突中产生出来的——这是历史的合力。","original":"Das Endresultat geht aus den sich kreuzenden vielen Einzelwillen hervor.","tags":["历史","合力"],"originalLang":"de"},{"content":"辩证法不过是关于自然界、人类社会和思维的运动和发展的普遍规律的科学。","original":"Die Dialektik ist die Wissenschaft von den allgemeinen Bewegungs- und Entwicklungsgesetzen der Natur, der Menschengesellschaft und des Denkens.","tags":["辩证","规律"],"originalLang":"de"},{"content":"没有哪一次巨大的历史灾难不是以历史的进步为补偿的。","original":"Kein großes geschichtliches Unheil, das nicht durch einen geschichtlichen Fortschritt wettgemacht würde.","tags":["历史","进步"],"originalLang":"de"},{"content":"社会一旦有技术上的需要，则这种需要就会比十所大学更能把科学推向前进。","original":"Hat die Gesellschaft ein technisches Bedürfnis, so hilft das der Wissenschaft mehr voran als zehn Universitäten.","tags":["技术","需求"],"originalLang":"de"},{"content":"没有一只猿手曾经制造过哪怕是最粗笨的石刀。劳动是从制造工具开始的。","original":"Keine Affenhand hat je das plumpste Steinmesser verfertigt.","tags":["劳动","进化"],"originalLang":"de"}]},"mao":{"name":"毛泽东","nameEn":"Mao Zedong","school":"辩证/历史","era":"1893-1976","originalLang":"zh","core":"矛盾论、实践论、群众路线、独立自主","style":"直白有力。用最简单的话说最深刻的道理，从实践中来到实践中去。","quotes":[{"content":"The differences between friends cannot but reinforce their friendship.","original":"The differences between friends cannot but reinforce their friendship.","originalLang":"en","tags":["Friendship"]},{"content":"谁是我们的敌人？谁是我们的朋友？这个问题是革命的首要问题。","original":"谁是我们的敌人？谁是我们的朋友？这个问题是革命的首要问题。","tags":["策略","分析"],"originalLang":"zh"},{"content":"没有调查，就没有发言权。","original":"没有调查，就没有发言权。","tags":["实践","认识"],"originalLang":"zh"},{"content":"枪杆子里面出政权。","original":"枪杆子里面出政权。","tags":["权力","革命"],"originalLang":"zh"},{"content":"一切反动派都是纸老虎。","original":"一切反动派都是纸老虎。","tags":["战略","勇气"],"originalLang":"zh"},{"content":"星星之火，可以燎原。","original":"星星之火，可以燎原。","tags":["希望","积累"],"originalLang":"zh"},{"content":"实事求是。","original":"实事求是。","tags":["方法","认识"],"originalLang":"zh"},{"content":"为人民服务。","original":"为人民服务。","tags":["价值","奉献"],"originalLang":"zh"},{"content":"内因是变化的根据，外因是变化的条件。","original":"内因是变化的根据，外因是变化的条件。","tags":["矛盾","自主"],"originalLang":"zh"},{"content":"斗争是绝对的，统一是相对的。","original":"斗争是绝对的，统一是相对的。","tags":["矛盾","辩证"],"originalLang":"zh"},{"content":"自力更生，艰苦奋斗。","original":"自力更生，艰苦奋斗。","tags":["独立","毅力"],"originalLang":"zh"},{"content":"世界上没有无缘无故的爱，也没有无缘无故的恨。","original":"世界上没有无缘无故的爱，也没有无缘无故的恨。","tags":["因果","阶级"],"originalLang":"zh"},{"content":"战略上要藐视敌人，战术上要重视敌人。","original":"战略上要藐视敌人，战术上要重视敌人。","tags":["战略","勇气"],"originalLang":"zh"}]},"aurelius":{"name":"马可·奥勒留","nameEn":"Marcus Aurelius","school":"斯多葛","era":"121-180","originalLang":"la","core":"内心自由、顺应自然、死亡冥想、理性支配","style":"内省沉稳。一个罗马皇帝写给自己的日记——如何在不完美的世界中保持内心的完整。","quotes":[{"content":"Each day provides its own gifts.","original":"Each day provides its own gifts.","originalLang":"en","tags":["Famous Quotes","Wisdom"]},{"content":"Everything that exists is in a manner the seed of that which will be.","original":"Everything that exists is in a manner the seed of that which will be.","originalLang":"en","tags":["Famous Quotes"]},{"content":"Waste no more time arguing about what a good man should be. Be one.","original":"Waste no more time arguing about what a good man should be. Be one.","originalLang":"en","tags":["Famous Quotes"]},{"content":"Very little is needed to make a happy life; it is all within yourself, in your way of thinking.","original":"Very little is needed to make a happy life; it is all within yourself, in your way of thinking.","originalLang":"en","tags":["Famous Quotes"]},{"content":"He who lives in harmony with himself lives in harmony with the universe.","original":"He who lives in harmony with himself lives in harmony with the universe.","originalLang":"en","tags":["Famous Quotes","Wisdom"]},{"content":"The universe is transformation; our life is what our thoughts make it.","original":"The universe is transformation; our life is what our thoughts make it.","originalLang":"en","tags":["Famous Quotes"]},{"content":"If it is not right do not do it; if it is not true do not say it.","original":"If it is not right do not do it; if it is not true do not say it.","originalLang":"en","tags":["Famous Quotes"]},{"content":"Look back over the past, with its changing empires that rose and fell, and you can foresee the future, too.","original":"Look back over the past, with its changing empires that rose and fell, and you can foresee the future, too.","originalLang":"en","tags":["Future"]},{"content":"Accept the things to which fate binds you and love the people with whom fate brings you together but do so with all your heart.","original":"Accept the things to which fate binds you and love the people with whom fate brings you together but do so with all your heart.","originalLang":"en","tags":["Famous Quotes"]},{"content":"There is nothing happens to any person but what was in his power to go through with.","original":"There is nothing happens to any person but what was in his power to go through with.","originalLang":"en","tags":["Famous Quotes"]},{"content":"Everything that happens as it should, and if you observe carefully, you will find this to be so.","original":"Everything that happens as it should, and if you observe carefully, you will find this to be so.","originalLang":"en","tags":["Famous Quotes"]},{"content":"Everything we hear is an opinion, not a fact. Everything we see is a perspective, not the truth.","original":"Everything we hear is an opinion, not a fact. Everything we see is a perspective, not the truth.","originalLang":"en","tags":["Famous Quotes"]},{"content":"Loss is nothing else but change, and change is Nature's delight.","original":"Loss is nothing else but change, and change is Nature's delight.","originalLang":"en","tags":["Famous Quotes","Change","Wisdom"]}]},"seneca":{"name":"塞涅卡","nameEn":"Seneca the Younger","school":"斯多葛","era":"4 BC-65 AD","originalLang":"la","core":"命运接受、时间意识、心灵平静、简朴生活","style":"睿智实用。哲学不是抽象思辨，而是生活的技艺。","quotes":[{"content":"Things that were hard to bear are sweet to remember.","original":"Things that were hard to bear are sweet to remember.","originalLang":"en","tags":["Famous Quotes"]},{"content":"The greatest remedy for anger is delay.","original":"The greatest remedy for anger is delay.","originalLang":"en","tags":["Famous Quotes"]},{"content":"There is no great genius without some touch of madness.","original":"There is no great genius without some touch of madness.","originalLang":"en","tags":["Famous Quotes"]},{"content":"Friendship always benefits; love sometimes injures.","original":"Friendship always benefits; love sometimes injures.","originalLang":"en","tags":["Friendship"]},{"content":"If one does not know to which port is sailing, no wind is favorable.","original":"If one does not know to which port is sailing, no wind is favorable.","originalLang":"en","tags":["Famous Quotes"]},{"content":"No man was ever wise by chance.","original":"No man was ever wise by chance.","originalLang":"en","tags":["Famous Quotes","Wisdom"]},{"content":"Most powerful is he who has himself in his own power.","original":"Most powerful is he who has himself in his own power.","originalLang":"en","tags":["Famous Quotes"]},{"content":"The mind unlearns with difficulty what it has long learned.","original":"The mind unlearns with difficulty what it has long learned.","originalLang":"en","tags":["Famous Quotes"]},{"content":"Begin at once to live and count each separate day as a separate life.","original":"Begin at once to live and count each separate day as a separate life.","originalLang":"en","tags":["Famous Quotes"]},{"content":"The conditions of conquest are always easy. We have but to toil awhile, endure awhile, believe always, and never turn back.","original":"The conditions of conquest are always easy. We have but to toil awhile, endure awhile, believe always, and never turn back.","originalLang":"en","tags":["Famous Quotes"]},{"content":"Luck is what happens when preparation meets opportunity.","original":"Luck is what happens when preparation meets opportunity.","originalLang":"en","tags":["Famous Quotes"]},{"content":"One of the most beautiful qualities of true friendship is to understand and to be understood.","original":"One of the most beautiful qualities of true friendship is to understand and to be understood.","originalLang":"en","tags":["Friendship"]},{"content":"If one does not know to which port one is sailing, no wind is favorable.","original":"If one does not know to which port one is sailing, no wind is favorable.","originalLang":"en","tags":["Wisdom"]}]},"epictetus":{"name":"爱比克泰德","nameEn":"Epictetus","school":"斯多葛","era":"55-135","originalLang":"la","core":"控制的二分法、自由即理性、习惯的力量","style":"直指人心。一个曾经的奴隶教你什么才是真正的自由。","quotes":[{"content":"If you wish to be a writer, write.","original":"If you wish to be a writer, write.","originalLang":"en","tags":["Success"]},{"content":"Not every difficult and dangerous thing is suitable for training, but only that which is conducive to success in achieving the object of our effort.","original":"Not every difficult and dangerous thing is suitable for training, but only that which is conducive to success in achieving the object of our effort.","originalLang":"en","tags":["Success"]},{"content":"The key is to keep company only with people who uplift you, whose presence calls forth your best.","original":"The key is to keep company only with people who uplift you, whose presence calls forth your best.","originalLang":"en","tags":["Inspirational"]},{"content":"Difficulties are things that show a person what they are.","original":"Difficulties are things that show a person what they are.","originalLang":"en","tags":["Famous Quotes"]},{"content":"Practice yourself, for heaven's sake in little things, and then proceed to greater.","original":"Practice yourself, for heaven's sake in little things, and then proceed to greater.","originalLang":"en","tags":["Famous Quotes"]},{"content":"Nature gave us one tongue and two ears so we could hear twice as much as we speak.","original":"Nature gave us one tongue and two ears so we could hear twice as much as we speak.","originalLang":"en","tags":["Famous Quotes"]},{"content":"Freedom is the right to live as we wish.","original":"Freedom is the right to live as we wish.","originalLang":"en","tags":["Freedom"]},{"content":"There is only one way to happiness and that is to cease worrying about things which are beyond the power of our will.","original":"There is only one way to happiness and that is to cease worrying about things which are beyond the power of our will.","originalLang":"en","tags":["Happiness"]},{"content":"He is a wise man who does not grieve for the things which he has not but rejoices for those which he has.","original":"He is a wise man who does not grieve for the things which he has not but rejoices for those which he has.","originalLang":"en","tags":["Famous Quotes"]},{"content":"When you are offended at any man's fault, turn to yourself and study your own failings. Then you will forget your anger.","original":"When you are offended at any man's fault, turn to yourself and study your own failings. Then you will forget your anger.","originalLang":"en","tags":["Famous Quotes"]},{"content":"No man is free who is not master of himself.","original":"No man is free who is not master of himself.","originalLang":"en","tags":["Famous Quotes"]},{"content":"It's not what happens to you, but how you react to it that matters.","original":"It's not what happens to you, but how you react to it that matters.","originalLang":"en","tags":["Famous Quotes","Wisdom"]},{"content":"Make the best use of what is in your power and take the rest as it happens.","original":"Make the best use of what is in your power and take the rest as it happens.","originalLang":"en","tags":["Famous Quotes"]},{"content":"One that desires to excel should endeavor in those things that are in themselves most excellent.","original":"One that desires to excel should endeavor in those things that are in themselves most excellent.","originalLang":"en","tags":["Famous Quotes"]},{"content":"It is impossible for a man to learn what he thinks he already knows.","original":"It is impossible for a man to learn what he thinks he already knows.","originalLang":"en","tags":["Famous Quotes"]},{"content":"If you seek truth, you will not seek victory by dishonorable means, and if you find truth you will become invincible.","original":"If you seek truth, you will not seek victory by dishonorable means, and if you find truth you will become invincible.","originalLang":"en","tags":["Famous Quotes"]},{"content":"Know, first, who you are, and then adorn yourself accordingly.","original":"Know, first, who you are, and then adorn yourself accordingly.","originalLang":"en","tags":["Famous Quotes"]},{"content":"We have two ears and one mouth so that we can listen twice as much as we speak.","original":"We have two ears and one mouth so that we can listen twice as much as we speak.","originalLang":"en","tags":["Famous Quotes"]},{"content":"The world turns aside to let any man pass who knows where he is going.","original":"The world turns aside to let any man pass who knows where he is going.","originalLang":"en","tags":["Famous Quotes"]},{"content":"Keep silence for the most part, and speak only when you must, and then briefly.","original":"Keep silence for the most part, and speak only when you must, and then briefly.","originalLang":"en","tags":["Famous Quotes"]},{"content":"First say to yourself what you would be; and then do what you have to do.","original":"First say to yourself what you would be; and then do what you have to do.","originalLang":"en","tags":["Famous Quotes"]},{"content":"It is the nature of the wise to resist pleasures, but the foolish to be a slave to them.","original":"It is the nature of the wise to resist pleasures, but the foolish to be a slave to them.","originalLang":"en","tags":["Wisdom"]},{"content":"Men are disturbed not by things, but by the view which they take of them.","original":"Men are disturbed not by things, but by the view which they take of them.","originalLang":"en","tags":["Famous Quotes"]}]},"confucius":{"name":"孔子","nameEn":"Confucius","school":"东方智慧","era":"551-479 BC","originalLang":"zh","core":"仁、礼、中庸、君子之道、学而不厌","style":"温厚但绝不软弱。修身齐家治国平天下，起点永远是自身的修养。","quotes":[{"content":"Choose a job you love, and you will never have to work a day in your life.","original":"Choose a job you love, and you will never have to work a day in your life.","originalLang":"en","tags":["Inspirational","Success","Life"]},{"content":"They must often change, who would be constant in happiness or wisdom.","original":"They must often change, who would be constant in happiness or wisdom.","originalLang":"en","tags":["Famous Quotes","Wisdom"]},{"content":"A youth, when at home, should be filial and, abroad, respectful to his elders. He should be earnest and truthful. He should overflow in love to all and cultivate the friendship of the good. When he has time and opportunity, after the performance of these things, he should employ them in polite studies.","original":"A youth, when at home, should be filial and, abroad, respectful to his elders. He should be earnest and truthful. He should overflow in love to all and cultivate the friendship of the good. When he has time and opportunity, after the performance of these things, he should employ them in polite studies.","originalLang":"en","tags":["Friendship"]},{"content":"What you do not want done to yourself, do not do to others.","original":"What you do not want done to yourself, do not do to others.","originalLang":"en","tags":["Wisdom"]},{"content":"When you see a man of worth, think of how you may emulate him. When you see one who is unworthy, examine yourself.","original":"When you see a man of worth, think of how you may emulate him. When you see one who is unworthy, examine yourself.","originalLang":"en","tags":["Wisdom"]},{"content":"It does not matter how slowly you go as long as you do not stop.","original":"It does not matter how slowly you go as long as you do not stop.","originalLang":"en","tags":["Famous Quotes","Inspirational"]},{"content":"Fine words and an insinuating appearance are seldom associated with true virtue","original":"Fine words and an insinuating appearance are seldom associated with true virtue","originalLang":"en","tags":["Wisdom"]},{"content":"The superior man acts before he speaks, and afterwards speaks according to his action.","original":"The superior man acts before he speaks, and afterwards speaks according to his action.","originalLang":"en","tags":["Wisdom"]},{"content":"I will not be concerned at other men's not knowing me; I will be concerned at my own want of ability.","original":"I will not be concerned at other men's not knowing me; I will be concerned at my own want of ability.","originalLang":"en","tags":["Wisdom"]},{"content":"To be wrong is nothing unless you continue to remember it.","original":"To be wrong is nothing unless you continue to remember it.","originalLang":"en","tags":["Wisdom"]},{"content":"It is more shameful to distrust our friends than to be deceived by them.","original":"It is more shameful to distrust our friends than to be deceived by them.","originalLang":"en","tags":["Friendship","Famous Quotes"]},{"content":"Life is really simple, but we insist on making it complicated.","original":"Life is really simple, but we insist on making it complicated.","originalLang":"en","tags":["Wisdom"]},{"content":"Sincerity is the way of Heaven. The attainment of sincerity is the way of men.","original":"Sincerity is the way of Heaven. The attainment of sincerity is the way of men.","originalLang":"en","tags":["Wisdom"]},{"content":"To give oneself earnestly to the duties due to men, and, while respecting spiritual beings, to keep aloof from them, may be called wisdom.","original":"To give oneself earnestly to the duties due to men, and, while respecting spiritual beings, to keep aloof from them, may be called wisdom.","originalLang":"en","tags":["Wisdom"]},{"content":"Our greatest glory is not in never falling, but in rising every time we fall.","original":"Our greatest glory is not in never falling, but in rising every time we fall.","originalLang":"en","tags":["Wisdom"]},{"content":"The Superior Man is aware of Righteousness, the inferior man is aware of advantage.","original":"The Superior Man is aware of Righteousness, the inferior man is aware of advantage.","originalLang":"en","tags":["Wisdom"]},{"content":"Silence is the true friend that never betrays.","original":"Silence is the true friend that never betrays.","originalLang":"en","tags":["Wisdom"]},{"content":"Everything has beauty, but not everyone sees it.","original":"Everything has beauty, but not everyone sees it.","originalLang":"en","tags":["Wisdom"]},{"content":"Ability will never catch up with the demand for it.","original":"Ability will never catch up with the demand for it.","originalLang":"en","tags":["Wisdom"]},{"content":"There are three methods to gaining wisdom. The first is reflection, which is the highest. The second is limitation, which is the easiest. The third is experience, which is the bitterest.","original":"There are three methods to gaining wisdom. The first is reflection, which is the highest. The second is limitation, which is the easiest. The third is experience, which is the bitterest.","originalLang":"en","tags":["Wisdom"]},{"content":"I am not bothered by the fact that I am unknown. I am bothered when I do not know others.","original":"I am not bothered by the fact that I am unknown. I am bothered when I do not know others.","originalLang":"en","tags":["Wisdom"]},{"content":"The more you know yourself, the more you forgive yourself.","original":"The more you know yourself, the more you forgive yourself.","originalLang":"en","tags":["Wisdom"]},{"content":"The superior man is modest in his speech but exceeds in his actions.","original":"The superior man is modest in his speech but exceeds in his actions.","originalLang":"en","tags":["Wisdom"]},{"content":"When you meet someone better than yourself, turn your thoughts to becoming his equal. When you meet someone not as good as you are, look within and examine your own self.","original":"When you meet someone better than yourself, turn your thoughts to becoming his equal. When you meet someone not as good as you are, look within and examine your own self.","originalLang":"en","tags":["Wisdom"]},{"content":"Reviewing what you have learned and learning anew, you are fit to be a teacher.","original":"Reviewing what you have learned and learning anew, you are fit to be a teacher.","originalLang":"en","tags":["Wisdom"]},{"content":"To study and not think is a waste. To think and not study is dangerous.","original":"To study and not think is a waste. To think and not study is dangerous.","originalLang":"en","tags":["Wisdom"]},{"content":"By three methods we may learn wisdom: First, by reflection, which is noblest; Second, by imitation, which is easiest; and third by experience, which is the bitterest.","original":"By three methods we may learn wisdom: First, by reflection, which is noblest; Second, by imitation, which is easiest; and third by experience, which is the bitterest.","originalLang":"en","tags":["Wisdom"]},{"content":"The will to win, the desire to succeed, the urge to reach your full potential... these are the keys that will unlock the door to personal excellence.","original":"The will to win, the desire to succeed, the urge to reach your full potential... these are the keys that will unlock the door to personal excellence.","originalLang":"en","tags":["Inspirational"]},{"content":"The superior man is satisfied and composed; the mean man is always full of distress.","original":"The superior man is satisfied and composed; the mean man is always full of distress.","originalLang":"en","tags":["Wisdom"]},{"content":"When it is obvious that the goals cannot be reached, don't adjust the goals, adjust the action steps.","original":"When it is obvious that the goals cannot be reached, don't adjust the goals, adjust the action steps.","originalLang":"en","tags":["Famous Quotes","Wisdom"]},{"content":"Being in humaneness is good. If we select other goodness and thus are far apart from humaneness, how can we be the wise?","original":"Being in humaneness is good. If we select other goodness and thus are far apart from humaneness, how can we be the wise?","originalLang":"en","tags":["Wisdom"]},{"content":"I want you to be everything that's you, deep at the center of your being.","original":"I want you to be everything that's you, deep at the center of your being.","originalLang":"en","tags":["Wisdom"]},{"content":"The more man meditates upon good thoughts, the better will be his world and the world at large.","original":"The more man meditates upon good thoughts, the better will be his world and the world at large.","originalLang":"en","tags":["Inspirational"]},{"content":"Learning without reflection is a waste, reflection without learning is dangerous.","original":"Learning without reflection is a waste, reflection without learning is dangerous.","originalLang":"en","tags":["Wisdom"]},{"content":"I hear and I forget. I see and I remember. I do and I understand.","original":"I hear and I forget. I see and I remember. I do and I understand.","originalLang":"en","tags":["Wisdom"]},{"content":"He who wishes to secure the good of others, has already secured his own.","original":"He who wishes to secure the good of others, has already secured his own.","originalLang":"en","tags":["Wisdom"]},{"content":"The cautious seldom err.","original":"The cautious seldom err.","originalLang":"en","tags":["Wisdom"]},{"content":"When you see a good person, think of becoming like him. When you see someone not so good, reflect on your own weak points.","original":"When you see a good person, think of becoming like him. When you see someone not so good, reflect on your own weak points.","originalLang":"en","tags":["Wisdom"]},{"content":"Study the past, if you would divine the future.","original":"Study the past, if you would divine the future.","originalLang":"en","tags":["Wisdom"]},{"content":"Wherever you go, go with all your heart.","original":"Wherever you go, go with all your heart.","originalLang":"en","tags":["Wisdom"]},{"content":"If you look into your own heart, and you find nothing wrong there, what is there to worry about? What is there to fear?","original":"If you look into your own heart, and you find nothing wrong there, what is there to worry about? What is there to fear?","originalLang":"en","tags":["Wisdom"]},{"content":"To be wronged is nothing unless you continue to remember it.","original":"To be wronged is nothing unless you continue to remember it.","originalLang":"en","tags":["Wisdom"]},{"content":"Wisdom, compassion, and courage are the three universally recognized moral qualities of men.","original":"Wisdom, compassion, and courage are the three universally recognized moral qualities of men.","originalLang":"en","tags":["Wisdom"]},{"content":"The superior man understands what is right; the inferior man understands what will sell.","original":"The superior man understands what is right; the inferior man understands what will sell.","originalLang":"en","tags":["Business"]}]},"laozi":{"name":"老子","nameEn":"Laozi","school":"东方智慧","era":"6th century BC","originalLang":"zh","core":"道法自然、无为而无不为、柔弱胜刚强、反者道之动","style":"玄妙而透辟。用最少的话推翻最多的执念，不争即是最大的争。","quotes":[{"content":"If you correct your mind, the rest of your life will fall into place.","original":"If you correct your mind, the rest of your life will fall into place.","originalLang":"en","tags":["Life"]},{"content":"Doing nothing is better than being busy doing nothing.","original":"Doing nothing is better than being busy doing nothing.","originalLang":"en","tags":["Wisdom"]},{"content":"Great acts are made up of small deeds.","original":"Great acts are made up of small deeds.","originalLang":"en","tags":["Wisdom"]},{"content":"He who talks more is sooner exhausted.","original":"He who talks more is sooner exhausted.","originalLang":"en","tags":["Wisdom"]},{"content":"Silence is a source of great strength.","original":"Silence is a source of great strength.","originalLang":"en","tags":["Wisdom"]},{"content":"All difficult things have their origin in that which is easy, and great things in that which is small.","original":"All difficult things have their origin in that which is easy, and great things in that which is small.","originalLang":"en","tags":["Wisdom"]},{"content":"In dwelling, live close to the ground. In thinking, keep to the simple. In conflict, be fair and generous. In governing, don't try to control. In work, do what you enjoy. In family life, be completely present.","original":"In dwelling, live close to the ground. In thinking, keep to the simple. In conflict, be fair and generous. In governing, don't try to control. In work, do what you enjoy. In family life, be completely present.","originalLang":"en","tags":["Wisdom"]},{"content":"He who knows that enough is enough will always have enough.","original":"He who knows that enough is enough will always have enough.","originalLang":"en","tags":["Wisdom"]},{"content":"By letting it go it all gets done. The world is won by those who let it go. But when you try and try. The world is beyond the winning.","original":"By letting it go it all gets done. The world is won by those who let it go. But when you try and try. The world is beyond the winning.","originalLang":"en","tags":["Wisdom"]},{"content":"He who is contented is rich.","original":"He who is contented is rich.","originalLang":"en","tags":["Wisdom"]},{"content":"At the center of your being, you have the answer; you know who you are, and you know what you want.","original":"At the center of your being, you have the answer; you know who you are, and you know what you want.","originalLang":"en","tags":["Wisdom"]},{"content":"He who conquers others is strong; He who conquers himself is mighty.","original":"He who conquers others is strong; He who conquers himself is mighty.","originalLang":"en","tags":["Wisdom"]},{"content":"Give a man a fish and you feed him for a day. Teach him how to fish and you feed him for a lifetime.","original":"Give a man a fish and you feed him for a day. Teach him how to fish and you feed him for a lifetime.","originalLang":"en","tags":["Wisdom"]},{"content":"Nothing is softer or more flexible than water, yet nothing can resist it.","original":"Nothing is softer or more flexible than water, yet nothing can resist it.","originalLang":"en","tags":["Wisdom"]},{"content":"The power of intuitive understanding will protect you from harm until the end of your days.","original":"The power of intuitive understanding will protect you from harm until the end of your days.","originalLang":"en","tags":["Wisdom"]},{"content":"Great indeed is the sublimity of the Creative, to which all beings owe their beginning, and which permeates all heaven.","original":"Great indeed is the sublimity of the Creative, to which all beings owe their beginning, and which permeates all heaven.","originalLang":"en","tags":["Wisdom"]},{"content":"He who knows, does not speak. He who speaks, does not know.","original":"He who knows, does not speak. He who speaks, does not know.","originalLang":"en","tags":["Wisdom"]},{"content":"Be the chief but never the lord.","original":"Be the chief but never the lord.","originalLang":"en","tags":["Wisdom"]},{"content":"To see things in the seed, that is genius.","original":"To see things in the seed, that is genius.","originalLang":"en","tags":["Wisdom"]},{"content":"I have just three things to teach: simplicity, patience, compassion. These three are your greatest treasures.","original":"I have just three things to teach: simplicity, patience, compassion. These three are your greatest treasures.","originalLang":"en","tags":["Famous Quotes","Wisdom"]},{"content":"The key to growth is the introduction of higher dimensions of consciousness into our awareness.","original":"The key to growth is the introduction of higher dimensions of consciousness into our awareness.","originalLang":"en","tags":["Wisdom"]},{"content":"The journey of a thousand miles begins with one step.","original":"The journey of a thousand miles begins with one step.","originalLang":"en","tags":["Famous Quotes","Wisdom"]},{"content":"Knowing others is wisdom, knowing yourself is Enlightenment.","original":"Knowing others is wisdom, knowing yourself is Enlightenment.","originalLang":"en","tags":["Wisdom"]},{"content":"To lead people walk behind them.","original":"To lead people walk behind them.","originalLang":"en","tags":["Wisdom"]},{"content":"When you are content to be simply yourself and don't compare or compete, everybody will respect you.","original":"When you are content to be simply yourself and don't compare or compete, everybody will respect you.","originalLang":"en","tags":["Wisdom"]},{"content":"An ant on the move does more than a dozing ox","original":"An ant on the move does more than a dozing ox","originalLang":"en","tags":["Wisdom"]},{"content":"From wonder into wonder existence opens.","original":"From wonder into wonder existence opens.","originalLang":"en","tags":["Wisdom"]},{"content":"The wise man does not lay up his own treasures. The more he gives to others, the more he has for his own.","original":"The wise man does not lay up his own treasures. The more he gives to others, the more he has for his own.","originalLang":"en","tags":["Wisdom"]},{"content":"Do the difficult things while they are easy and do the great things while they are small. A journey of a thousand miles must begin with a single step.","original":"Do the difficult things while they are easy and do the great things while they are small. A journey of a thousand miles must begin with a single step.","originalLang":"en","tags":["Inspirational"]},{"content":"Anticipate the difficult by managing the easy.","original":"Anticipate the difficult by managing the easy.","originalLang":"en","tags":["Wisdom"]},{"content":"If you do not change direction, you may end up where you are heading.","original":"If you do not change direction, you may end up where you are heading.","originalLang":"en","tags":["Wisdom","Success"]},{"content":"When you realize there is nothing lacking, the whole world belongs to you.","original":"When you realize there is nothing lacking, the whole world belongs to you.","originalLang":"en","tags":["Wisdom"]},{"content":"If you would take, you must first give, this is the beginning of intelligence.","original":"If you would take, you must first give, this is the beginning of intelligence.","originalLang":"en","tags":["Wisdom"]},{"content":"A leader is best when people barely know he exists, when his work is done, his aim fulfilled, they will say: we did it ourselves.","original":"A leader is best when people barely know he exists, when his work is done, his aim fulfilled, they will say: we did it ourselves.","originalLang":"en","tags":["Wisdom","Leadership"]},{"content":"Music in the soul can be heard by the universe.","original":"Music in the soul can be heard by the universe.","originalLang":"en","tags":["Wisdom"]},{"content":"When I let go of what I am, I become what I might be.","original":"When I let go of what I am, I become what I might be.","originalLang":"en","tags":["Wisdom"]},{"content":"He who knows himself is enlightened.","original":"He who knows himself is enlightened.","originalLang":"en","tags":["Wisdom"]},{"content":"Kindness in words creates confidence. Kindness in thinking creates profoundness. Kindness in giving creates love.","original":"Kindness in words creates confidence. Kindness in thinking creates profoundness. Kindness in giving creates love.","originalLang":"en","tags":["Wisdom"]},{"content":"One who is too insistent on his own views, finds few to agree with him.","original":"One who is too insistent on his own views, finds few to agree with him.","originalLang":"en","tags":["Wisdom"]},{"content":"He who knows others is wise. He who knows himself is enlightened.","original":"He who knows others is wise. He who knows himself is enlightened.","originalLang":"en","tags":["Wisdom"]},{"content":"He who controls others may be powerful, but he who has mastered himself is mightier still.","original":"He who controls others may be powerful, but he who has mastered himself is mightier still.","originalLang":"en","tags":["Wisdom"]}]},"suntzu":{"name":"孙子","nameEn":"Sun Tzu","school":"东方智慧","era":"544-496 BC","originalLang":"zh","core":"知己知彼、不战而屈人之兵、兵者诡道","style":"精确冷酷。竞争的本质不是勇猛而是计算和认知优势。","quotes":[{"content":"The supreme art of war is to subdue the enemy without fighting.","original":"The supreme art of war is to subdue the enemy without fighting.","originalLang":"en","tags":["Famous Quotes"]},{"content":"Can you imagine what I would do if I could do all I can?","original":"Can you imagine what I would do if I could do all I can?","originalLang":"en","tags":["Famous Quotes"]},{"content":"You have to believe in yourself.","original":"You have to believe in yourself.","originalLang":"en","tags":["Famous Quotes"]},{"content":"知己知彼，百战不殆。","original":"知己知彼，百战不殆。","tags":["策略","认知"],"originalLang":"zh"},{"content":"不战而屈人之兵，善之善者也。","original":"不战而屈人之兵，善之善者也。","tags":["战略","境界"],"originalLang":"zh"},{"content":"上兵伐谋，其次伐交，其次伐兵，其下攻城。","original":"上兵伐谋，其次伐交，其次伐兵，其下攻城。","tags":["策略","层次"],"originalLang":"zh"},{"content":"兵无常势，水无常形。能因敌变化而取胜者，谓之神。","original":"兵无常势，水无常形。","tags":["变化","灵活"],"originalLang":"zh"},{"content":"胜兵先胜而后求战，败兵先战而后求胜。","original":"胜兵先胜而后求战，败兵先战而后求胜。","tags":["准备","胜利"],"originalLang":"zh"},{"content":"知可以战与不可以战者胜。","original":"知可以战与不可以战者胜。","tags":["判断","时机"],"originalLang":"zh"},{"content":"其疾如风，其徐如林，侵掠如火，不动如山。","original":"其疾如风，其徐如林，侵掠如火，不动如山。","tags":["行动","纪律"],"originalLang":"zh"}]},"plato":{"name":"柏拉图","nameEn":"Plato","school":"理性主义","era":"428-348 BC","originalLang":"grc","core":"理念论、洞穴比喻、哲人王、灵魂三分","style":"追问本质。我们看到的只是墙上的影子，真正的实在在洞穴之外。","quotes":[{"content":"Bodily exercise, when compulsory, does no harm to the body; but knowledge which is acquired under compulsion obtains no hold on the mind.","original":"Bodily exercise, when compulsory, does no harm to the body; but knowledge which is acquired under compulsion obtains no hold on the mind.","originalLang":"en","tags":["Famous Quotes"]},{"content":"There are three classes of men; lovers of wisdom, lovers of honor, and lovers of gain.","original":"There are three classes of men; lovers of wisdom, lovers of honor, and lovers of gain.","originalLang":"en","tags":["Wisdom"]},{"content":"Wisdom alone is the science of other sciences.","original":"Wisdom alone is the science of other sciences.","originalLang":"en","tags":["Wisdom"]},{"content":"Wise men talk because they have something to say; fools, because they have to say something.","original":"Wise men talk because they have something to say; fools, because they have to say something.","originalLang":"en","tags":["Famous Quotes"]},{"content":"Wise men speak because they have something to say; Fools because they have to say something.","original":"Wise men speak because they have something to say; Fools because they have to say something.","originalLang":"en","tags":["Famous Quotes"]},{"content":"A good decision is based on knowledge and not on numbers.","original":"A good decision is based on knowledge and not on numbers.","originalLang":"en","tags":["Famous Quotes"]},{"content":"Knowledge without justice ought to be called cunning rather than wisdom.","original":"Knowledge without justice ought to be called cunning rather than wisdom.","originalLang":"en","tags":["Wisdom"]},{"content":"Cunning... is but the low mimic of wisdom.","original":"Cunning... is but the low mimic of wisdom.","originalLang":"en","tags":["Wisdom"]},{"content":"Good actions give strength to ourselves and inspire good actions in others.","original":"Good actions give strength to ourselves and inspire good actions in others.","originalLang":"en","tags":["Famous Quotes"]},{"content":"The man who makes everything that leads to happiness depends upon himself, and not upon other men, has adopted the very best plan for living happily. This is the man of moderation, the man of manly character and of wisdom.","original":"The man who makes everything that leads to happiness depends upon himself, and not upon other men, has adopted the very best plan for living happily. This is the man of moderation, the man of manly character and of wisdom.","originalLang":"en","tags":["Wisdom"]},{"content":"Love is a serious mental disease.","original":"Love is a serious mental disease.","originalLang":"en","tags":["Famous Quotes"]}]},"kant":{"name":"康德","nameEn":"Immanuel Kant","school":"理性主义","era":"1724-1804","originalLang":"de","core":"道德律令、物自体、二律背反、启蒙即敢于运用理性","style":"严谨深刻。头顶的星空和心中的道德律——自由不在随心所欲，而在自我立法。","quotes":[{"content":"All our knowledge begins with the senses, proceeds then to the understanding, and ends with reason. There is nothing higher than reason.","original":"All our knowledge begins with the senses, proceeds then to the understanding, and ends with reason. There is nothing higher than reason.","originalLang":"en","tags":["Famous Quotes"]},{"content":"Science is organized knowledge. Wisdom is organized life.","original":"Science is organized knowledge. Wisdom is organized life.","originalLang":"en","tags":["Famous Quotes","Wisdom"]},{"content":"有两种东西，我对它们的思考越是深沉和持久，它们在我心中唤起的惊奇和敬畏就越日新月异——头顶的星空和心中的道德律。","original":"Der bestirnte Himmel über mir und das moralische Gesetz in mir.","tags":["道德","敬畏"],"originalLang":"de"},{"content":"要敢于运用你自己的理性！这就是启蒙的格言。","original":"Sapere aude! Habe Mut, dich deines eigenen Verstandes zu bedienen!","tags":["启蒙","理性"],"originalLang":"de"},{"content":"你要这样行动：使你的意志的准则始终能够同时成为一条普遍的立法原则。","original":"Handle nur nach derjenigen Maxime, durch die du zugleich wollen kannst, dass sie ein allgemeines Gesetz werde.","tags":["道德","义务"],"originalLang":"de"},{"content":"人是目的，而不仅仅是手段。","original":"Handle so, dass du die Menschheit, sowohl in deiner Person als in der Person eines jeden anderen, jederzeit zugleich als Zweck, niemals bloß als Mittel brauchst.","tags":["尊严","伦理"],"originalLang":"de"},{"content":"没有内容的思想是空洞的，没有概念的直观是盲目的。","original":"Gedanken ohne Inhalt sind leer, Anschauungen ohne Begriffe sind blind.","tags":["认识","理性"],"originalLang":"de"},{"content":"自由不是你想做什么就做什么，而是你不想做什么就能不做什么。","original":"Freiheit ist nicht das Vermögen, ohne Gesetz zu handeln, sondern das Vermögen, nach der Vorstellung von Gesetzen zu handeln.","tags":["自由","自律"],"originalLang":"de"},{"content":"知识始于感觉，然后进入知性，最后终结于理性。","original":"Alle unsere Erkenntnis hebt von den Sinnen an, geht von da zum Verstande und endigt bei der Vernunft.","tags":["认识","知识"],"originalLang":"de"}]},"schopenhauer":{"name":"叔本华","nameEn":"Arthur Schopenhauer","school":"理性主义","era":"1788-1860","originalLang":"de","core":"意志即痛苦、表象世界、艺术救赎、禁欲解脱","style":"悲观而诚实。生命即欲望的钟摆——在痛若与无聊之间来回摆动。","quotes":[{"content":"In action a great heart is the chief qualification. In work, a great head.","original":"In action a great heart is the chief qualification. In work, a great head.","originalLang":"en","tags":["Wisdom"]},{"content":"Every man takes the limits of his own field of vision for the limits of the world.","original":"Every man takes the limits of his own field of vision for the limits of the world.","originalLang":"en","tags":["Famous Quotes"]},{"content":"生命是一团欲望，欲望不满足便痛苦，满足便无聊。人生就在痛苦和无聊之间摇摆。","original":"Das Leben schwingt also, gleich einem Pendel, hin und her, zwischen dem Schmerz und der Langeweile.","tags":["欲望","痛苦"],"originalLang":"de"},{"content":"人可以做他想做的，但无法想要他想要的。","original":"Der Mensch kann zwar tun, was er will, aber er kann nicht wollen, was er will.","tags":["自由","意志"],"originalLang":"de"},{"content":"要么孤独，要么庸俗。","original":"Einsamkeit ist das Los aller hervorragenden Geister.","tags":["孤独","独立"],"originalLang":"de"},{"content":"财富就像海水：饮得越多，渴得越厉害。","original":"Der Reichtum gleicht dem Seewasser: je mehr man davon trinkt, desto durstiger wird man.","tags":["欲望","财富"],"originalLang":"de"},{"content":"音乐是意志本身的直接摹本。","original":"Die Musik ist die unmittelbare Abbildung des Willens selbst.","tags":["艺术","意志"],"originalLang":"de"},{"content":"一个人越是属于后世，他就越不为自己的时代所理解。","original":"Je mehr einer der Nachwelt angehört, desto mehr ist er ein Fremdling seiner Zeit.","tags":["孤独","理解"],"originalLang":"de"},{"content":"每个人都将自己视野的界限当作世界的界限。","original":"Jeder hält die Grenzen seines eigenen Gesichtskreises für die Grenzen der Welt.","tags":["认识","局限"],"originalLang":"de"},{"content":"我们感觉不到了的东西，对我们来说就等于没有。","original":"Was man nicht fühlt, das ist für einen nicht.","tags":["感受","存在"],"originalLang":"de"}]},"buddha":{"name":"佛陀","nameEn":"The Buddha","school":"超越视角","era":"5th century BC","originalLang":"pi","core":"四圣谛、八正道、缘起性空、离苦得乐","style":"超然慈悲。痛苦源于执取——放下不是放弃，而是从根源上看见无我的实相。","quotes":[{"content":"To have much learning and skill, to be well-trained in discipline, and good in speech — this is the highest blessing.","original":"To have much learning and skill, to be well-trained in discipline, and good in speech — this is the highest blessing.","originalLang":"en","tags":["Wisdom"]},{"content":"A single lamp may light hundreds of thousands of lamps without itself being diminished.","original":"A single lamp may light hundreds of thousands of lamps without itself being diminished.","originalLang":"en","tags":["Wisdom"]},{"content":"Your worst enemy cannot harm you as much as your own unguarded thoughts.","original":"Your worst enemy cannot harm you as much as your own unguarded thoughts.","originalLang":"en","tags":["Wisdom"]},{"content":"What is past is left behind. The future is yet unreached. Whatever quality is present, clearly see it right there.","original":"What is past is left behind. The future is yet unreached. Whatever quality is present, clearly see it right there.","originalLang":"en","tags":["Wisdom","Future"]},{"content":"I am not the first Buddha who came upon Earth, nor shall I be the last. In due time, another Buddha will arise in the world - a Holy One, a supremely enlightened One, endowed with wisdom in conduct, auspicious, knowing the universe, an incomparable leader of men, a master of angels and mortals.","original":"I am not the first Buddha who came upon Earth, nor shall I be the last. In due time, another Buddha will arise in the world - a Holy One, a supremely enlightened One, endowed with wisdom in conduct, auspicious, knowing the universe, an incomparable leader of men, a master of angels and mortals.","originalLang":"en","tags":["Wisdom"]},{"content":"Conditions fall apart. Persist with diligence.","original":"Conditions fall apart. Persist with diligence.","originalLang":"en","tags":["Wisdom"]},{"content":"Three things cannot be long hidden: the sun, the moon, and the truth.","original":"Three things cannot be long hidden: the sun, the moon, and the truth.","originalLang":"en","tags":["Wisdom"]},{"content":"Those who are free of resentful thoughts surely find peace.","original":"Those who are free of resentful thoughts surely find peace.","originalLang":"en","tags":["Wisdom"]},{"content":"Meditation brings wisdom, lack of meditation leaves ignorance. Know well what leads you forward and what holds you back and choose the path that leads to wisdom.","original":"Meditation brings wisdom, lack of meditation leaves ignorance. Know well what leads you forward and what holds you back and choose the path that leads to wisdom.","originalLang":"en","tags":["Wisdom"]},{"content":"All phenomena are preceded by the mind, created by the mind, and have the mind as their master.","original":"All phenomena are preceded by the mind, created by the mind, and have the mind as their master.","originalLang":"en","tags":["Wisdom"]},{"content":"Do I speak at the right time, or not? Do I speak of facts, or not? Do I speak gently or harshly? Do I speak profitable words or not? Do I speak with a kindly heart, or inwardly malicious?","original":"Do I speak at the right time, or not? Do I speak of facts, or not? Do I speak gently or harshly? Do I speak profitable words or not? Do I speak with a kindly heart, or inwardly malicious?","originalLang":"en","tags":["Wisdom"]},{"content":"Heedfulness is the path to the Deathless. Heedlessness is the path to death. The heedful die not. The heedless are as if already dead.","original":"Heedfulness is the path to the Deathless. Heedlessness is the path to death. The heedful die not. The heedless are as if already dead.","originalLang":"en","tags":["Wisdom"]},{"content":"Don’t sacrifice your own welfare for that of another, no matter how great. Realizing your own true welfare, be intent on just that.","original":"Don’t sacrifice your own welfare for that of another, no matter how great. Realizing your own true welfare, be intent on just that.","originalLang":"en","tags":["Wisdom"]},{"content":"I, too, do not envision a doctrine of self the clinging to which there would not arise sorrow, lamentation, pain, grief, and despair.","original":"I, too, do not envision a doctrine of self the clinging to which there would not arise sorrow, lamentation, pain, grief, and despair.","originalLang":"en","tags":["Wisdom"]},{"content":"You should ignore that person’s impure behavior by way of speech and body, and focus on the fact that they get an openness and clarity of heart from time to time. That’s how to get rid of resentment for that person.","original":"You should ignore that person’s impure behavior by way of speech and body, and focus on the fact that they get an openness and clarity of heart from time to time. That’s how to get rid of resentment for that person.","originalLang":"en","tags":["Wisdom"]},{"content":"Let my skin and sinews and bones dry up, together with all the flesh and blood of my body! I welcome it! But I will not move from this spot until I have attained the supreme and final wisdom.","original":"Let my skin and sinews and bones dry up, together with all the flesh and blood of my body! I welcome it! But I will not move from this spot until I have attained the supreme and final wisdom.","originalLang":"en","tags":["Wisdom"]},{"content":"By oneself is evil done; by oneself is one defiled. By oneself is evil left undone; by oneself is one made pure.","original":"By oneself is evil done; by oneself is one defiled. By oneself is evil left undone; by oneself is one made pure.","originalLang":"en","tags":["Wisdom"]},{"content":"Much though he recites the sacred texts, but acts not accordingly, that heedless man is like a cowherd who only counts the cows of others","original":"Much though he recites the sacred texts, but acts not accordingly, that heedless man is like a cowherd who only counts the cows of others","originalLang":"en","tags":["Wisdom"]},{"content":"Do not scorn what you have received, nor envy the gains of others. He who envies others does not obtain peace of mind.","original":"Do not scorn what you have received, nor envy the gains of others. He who envies others does not obtain peace of mind.","originalLang":"en","tags":["Wisdom"]},{"content":"In the sky there are no tracks. Outside there is no recluse. There are no conditioned things that are eternal. There is no instability in the Buddhas.","original":"In the sky there are no tracks. Outside there is no recluse. There are no conditioned things that are eternal. There is no instability in the Buddhas.","originalLang":"en","tags":["Wisdom"]},{"content":"Better than a thousand hollow words, is one word that brings peace.","original":"Better than a thousand hollow words, is one word that brings peace.","originalLang":"en","tags":["Wisdom"]},{"content":"One should not hurt others if one loves oneself.","original":"One should not hurt others if one loves oneself.","originalLang":"en","tags":["Wisdom"]},{"content":"Drop by drop is the water pot filled. Likewise, the wise man, gathering it little by little, fills himself with good.","original":"Drop by drop is the water pot filled. Likewise, the wise man, gathering it little by little, fills himself with good.","originalLang":"en","tags":["Wisdom"]},{"content":"'As I am, so are they; as they are, so am I.' Comparing others with oneself, do not kill nor cause others to kill.","original":"'As I am, so are they; as they are, so am I.' Comparing others with oneself, do not kill nor cause others to kill.","originalLang":"en","tags":["Wisdom","Virtue"]},{"content":"A disciplined mind brings happiness.","original":"A disciplined mind brings happiness.","originalLang":"en","tags":["Wisdom","Happiness"]},{"content":"A noble one produces an abundance of merit by having a compassionate mind towards all living beings.","original":"A noble one produces an abundance of merit by having a compassionate mind towards all living beings.","originalLang":"en","tags":["Wisdom","Love"]},{"content":"A wise person should be urgently moved on occasions that make for urgency.","original":"A wise person should be urgently moved on occasions that make for urgency.","originalLang":"en","tags":["Wisdom","Motivational"]},{"content":"All experiences are preceded by mind, having mind as their master, created by mind.","original":"All experiences are preceded by mind, having mind as their master, created by mind.","originalLang":"en","tags":["Wisdom","Self"]},{"content":"Ardently do today what must be done. Who knows? Tomorrow, death comes.","original":"Ardently do today what must be done. Who knows? Tomorrow, death comes.","originalLang":"en","tags":["Wisdom","Motivational"]},{"content":"Conquer anger with non-anger. Conquer badness with goodness. Conquer meanness with generosity. Conquer dishonesty with truth.","original":"Conquer anger with non-anger. Conquer badness with goodness. Conquer meanness with generosity. Conquer dishonesty with truth.","originalLang":"en","tags":["Wisdom","Virtue","Love"]},{"content":"Delight in heedfulness! Guard well your thoughts!","original":"Delight in heedfulness! Guard well your thoughts!","originalLang":"en","tags":["Wisdom","Virtue"]},{"content":"Give, even if you only have a little.","original":"Give, even if you only have a little.","originalLang":"en","tags":["Wisdom"]},{"content":"I do not dispute with the world; rather it is the world that disputes with me.","original":"I do not dispute with the world; rather it is the world that disputes with me.","originalLang":"en","tags":["Wisdom","Philosophy"]},{"content":"If with a pure mind a person speaks or acts, happiness follows them like a never-departing shadow.","original":"If with a pure mind a person speaks or acts, happiness follows them like a never-departing shadow.","originalLang":"en","tags":["Wisdom","Happiness"]},{"content":"It is in the nature of things that joy arises in a person free from remorse.","original":"It is in the nature of things that joy arises in a person free from remorse.","originalLang":"en","tags":["Wisdom","Happiness"]},{"content":"Just as a mother would protect her only child with her life, even so let one cultivate a boundless love towards all beings.","original":"Just as a mother would protect her only child with her life, even so let one cultivate a boundless love towards all beings.","originalLang":"en","tags":["Wisdom","Love"]},{"content":"Meditate … do not delay, lest you later regret it.","original":"Meditate … do not delay, lest you later regret it.","originalLang":"en","tags":["Wisdom","Motivational"]},{"content":"One should train in deeds of merit—generosity, a balanced life, developing a loving mind—that yield long-lasting happiness.","original":"One should train in deeds of merit—generosity, a balanced life, developing a loving mind—that yield long-lasting happiness.","originalLang":"en","tags":["Wisdom","Happiness"]},{"content":"Purity and impurity depend on oneself; no one can purify another.","original":"Purity and impurity depend on oneself; no one can purify another.","originalLang":"en","tags":["Wisdom","Self","Self Help"]},{"content":"Radiate boundless love towards the entire world…","original":"Radiate boundless love towards the entire world…","originalLang":"en","tags":["Wisdom","Love"]},{"content":"Should a seeker not find a companion who is better or equal, let them resolutely pursue a solitary course.","original":"Should a seeker not find a companion who is better or equal, let them resolutely pursue a solitary course.","originalLang":"en","tags":["Wisdom","Philosophy"]},{"content":"Should you find a wise critic to point out your faults, follow him as you would a guide to hidden treasure.","original":"Should you find a wise critic to point out your faults, follow him as you would a guide to hidden treasure.","originalLang":"en","tags":["Wisdom","Wisdom"]},{"content":"Speak only endearing speech, speech that is welcomed. Speech, when it brings no evil to others, is a pleasant thing.","original":"Speak only endearing speech, speech that is welcomed. Speech, when it brings no evil to others, is a pleasant thing.","originalLang":"en","tags":["Wisdom","Virtue","Honor"]},{"content":"There is no fear for one whose mind is not filled with desires.","original":"There is no fear for one whose mind is not filled with desires.","originalLang":"en","tags":["Wisdom","Philosophy"]},{"content":"To support mother and father, to cherish partner and children, and to be engaged in peaceful occupation — this is the greatest blessing.","original":"To support mother and father, to cherish partner and children, and to be engaged in peaceful occupation — this is the greatest blessing.","originalLang":"en","tags":["Wisdom","Family"]},{"content":"Whatever has the nature of arising has the nature of ceasing.","original":"Whatever has the nature of arising has the nature of ceasing.","originalLang":"en","tags":["Wisdom","Philosophy"]},{"content":"Whatever is not yours: let go of it. Your letting go of it will be for your long-term happiness & benefit.","original":"Whatever is not yours: let go of it. Your letting go of it will be for your long-term happiness & benefit.","originalLang":"en","tags":["Wisdom","Happiness"]},{"content":"Better than a thousand useless words is one useful word, upon hearing which one attains peace.","original":"Better than a thousand useless words is one useful word, upon hearing which one attains peace.","originalLang":"en","tags":["Wisdom","Character"]},{"content":"It's a good thing to be satisfied with what one has.","original":"It's a good thing to be satisfied with what one has.","originalLang":"en","tags":["Wisdom","Self Help"]},{"content":"Let none find fault with others; let none see the omissions and commissions of others. But let one see one's own acts, done and undone.","original":"Let none find fault with others; let none see the omissions and commissions of others. But let one see one's own acts, done and undone.","originalLang":"en","tags":["Wisdom","Honor"]},{"content":"Should someone do good, let them do it again and again. They should develop this habit, for the accumulation of goodness brings joy.","original":"Should someone do good, let them do it again and again. They should develop this habit, for the accumulation of goodness brings joy.","originalLang":"en","tags":["Wisdom","Motivational"]},{"content":"The thing that is disliked by me is also disliked by others. Since I dislike this thing, how can I inflict it on someone else?","original":"The thing that is disliked by me is also disliked by others. Since I dislike this thing, how can I inflict it on someone else?","originalLang":"en","tags":["Wisdom","Philosophy","Virtue","Honor"]},{"content":"'All conditioned things are impermanent' — when one sees this with wisdom, one turns away from suffering.","original":"'All conditioned things are impermanent' — when one sees this with wisdom, one turns away from suffering.","originalLang":"en","tags":["Wisdom","Philosophy"]},{"content":"'As I am, so are these. As are these, so am I.' Drawing the parallel to yourself, neither kill nor get others to kill.","original":"'As I am, so are these. As are these, so am I.' Drawing the parallel to yourself, neither kill nor get others to kill.","originalLang":"en","tags":["Wisdom","Virtue","Honor"]},{"content":"A mind unruffled by the vagaries of fortune, from sorrow freed, from defilements cleansed, from fear liberated — this is the greatest blessing.","original":"A mind unruffled by the vagaries of fortune, from sorrow freed, from defilements cleansed, from fear liberated — this is the greatest blessing.","originalLang":"en","tags":["Wisdom"]},{"content":"All tremble at violence; all fear death. Putting oneself in the place of another, one should not kill nor cause another to kill.","original":"All tremble at violence; all fear death. Putting oneself in the place of another, one should not kill nor cause another to kill.","originalLang":"en","tags":["Wisdom","Virtue","Honor"]},{"content":"As a water bead on a lotus leaf, as water on a red lily, does not adhere, so the sage does not adhere to the seen, the heard, or the sensed.","original":"As a water bead on a lotus leaf, as water on a red lily, does not adhere, so the sage does not adhere to the seen, the heard, or the sensed.","originalLang":"en","tags":["Wisdom","Philosophy"]},{"content":"As an elephant in the battlefield withstands arrows shot from bows all around, even so shall I endure abuse.","original":"As an elephant in the battlefield withstands arrows shot from bows all around, even so shall I endure abuse.","originalLang":"en","tags":["Wisdom","Character","Courage"]},{"content":"Better it is to live one day seeing the rise and fall of things than to live a hundred years without ever seeing the rise and fall of things.","original":"Better it is to live one day seeing the rise and fall of things than to live a hundred years without ever seeing the rise and fall of things.","originalLang":"en","tags":["Wisdom","Philosophy"]},{"content":"Both formerly and now, it is only suffering that I describe, and the cessation of suffering.","original":"Both formerly and now, it is only suffering that I describe, and the cessation of suffering.","originalLang":"en","tags":["Wisdom","Happiness"]},{"content":"Ceasing to do evil, Cultivating the good, Purifying the heart: This is the teaching of the Buddhas.","original":"Ceasing to do evil, Cultivating the good, Purifying the heart: This is the teaching of the Buddhas.","originalLang":"en","tags":["Wisdom","Virtue"]},{"content":"Hatred is never appeased by hatred in this world. By non-hatred alone is hatred appeased. This is a law eternal.","original":"Hatred is never appeased by hatred in this world. By non-hatred alone is hatred appeased. This is a law eternal.","originalLang":"en","tags":["Wisdom","Love"]},{"content":"He who can curb his wrath as soon as it arises, as a timely antidote will check snake's venom that so quickly spreads, — such a monk gives up the here and the beyond, just as a serpent sheds its worn-out skin.","original":"He who can curb his wrath as soon as it arises, as a timely antidote will check snake's venom that so quickly spreads, — such a monk gives up the here and the beyond, just as a serpent sheds its worn-out skin.","originalLang":"en","tags":["Wisdom","Self Help"]},{"content":"If a man going down into a river, swollen and swiftly flowing, is carried away by the current — how can he help others across? – The Buddha","original":"If a man going down into a river, swollen and swiftly flowing, is carried away by the current — how can he help others across? – The Buddha","originalLang":"en","tags":["Wisdom"]},{"content":"Irrigators channel waters; fletchers straighten arrows; carpenters bend wood; the wise master themselves.","original":"Irrigators channel waters; fletchers straighten arrows; carpenters bend wood; the wise master themselves.","originalLang":"en","tags":["Wisdom","Self Help","Character"]},{"content":"Just as a solid rock is not shaken by the storm, even so the wise are not affected by praise or blame.","original":"Just as a solid rock is not shaken by the storm, even so the wise are not affected by praise or blame.","originalLang":"en","tags":["Wisdom","Character"]},{"content":"Know from the rivers in clefts and in crevices: those in small channels flow noisily, the great flow silent. Whatever's not full makes noise. Whatever is full is quiet.","original":"Know from the rivers in clefts and in crevices: those in small channels flow noisily, the great flow silent. Whatever's not full makes noise. Whatever is full is quiet.","originalLang":"en","tags":["Wisdom","Character"]},{"content":"May all beings have happy minds.","original":"May all beings have happy minds.","originalLang":"en","tags":["Wisdom","Happiness"]},{"content":"One is not called noble who harms living beings. By not harming living beings one is called noble.","original":"One is not called noble who harms living beings. By not harming living beings one is called noble.","originalLang":"en","tags":["Wisdom","Virtue"]},{"content":"Radiate boundless love towards the entire world — above, below, and across — unhindered, without ill will, without enmity.","original":"Radiate boundless love towards the entire world — above, below, and across — unhindered, without ill will, without enmity.","originalLang":"en","tags":["Wisdom","Love"]},{"content":"Resolutely train yourself to attain peace.","original":"Resolutely train yourself to attain peace.","originalLang":"en","tags":["Wisdom","Self Help"]},{"content":"Should a person do good, let him do it again and again. Let him find pleasure therein, for blissful is the accumulation of good.","original":"Should a person do good, let him do it again and again. Let him find pleasure therein, for blissful is the accumulation of good.","originalLang":"en","tags":["Wisdom","Character"]},{"content":"Some do not understand that we must die, But those who do realize this settle their quarrels.","original":"Some do not understand that we must die, But those who do realize this settle their quarrels.","originalLang":"en","tags":["Wisdom","Life"]},{"content":"The calmed say that what is well-spoken is best; second, that one should say what is right, not unrighteous; third, what's pleasing, not displeasing; fourth, what is true, not false.","original":"The calmed say that what is well-spoken is best; second, that one should say what is right, not unrighteous; third, what's pleasing, not displeasing; fourth, what is true, not false.","originalLang":"en","tags":["Wisdom","Truth"]},{"content":"The root of suffering is attachment.","original":"The root of suffering is attachment.","originalLang":"en","tags":["Wisdom","Happiness"]},{"content":"The world is afflicted by death and decay. But the wise do not grieve, having realized the nature of the world.","original":"The world is afflicted by death and decay. But the wise do not grieve, having realized the nature of the world.","originalLang":"en","tags":["Wisdom","Philosophy"]},{"content":"They blame those who remain silent, they blame those who speak much, they blame those who speak in moderation. There is none in the world who is not blamed.","original":"They blame those who remain silent, they blame those who speak much, they blame those who speak in moderation. There is none in the world who is not blamed.","originalLang":"en","tags":["Wisdom"]},{"content":"Those who cling to perceptions and views wander the world offending people.","original":"Those who cling to perceptions and views wander the world offending people.","originalLang":"en","tags":["Wisdom"]},{"content":"We will develop and cultivate the liberation of mind by lovingkindness, make it our vehicle, make it our basis, stabilize it, exercise ourselves in it, and fully perfect it.","original":"We will develop and cultivate the liberation of mind by lovingkindness, make it our vehicle, make it our basis, stabilize it, exercise ourselves in it, and fully perfect it.","originalLang":"en","tags":["Wisdom","Love"]},{"content":"When watching after yourself, you watch after others. When watching after others, you watch after yourself.","original":"When watching after yourself, you watch after others. When watching after others, you watch after yourself.","originalLang":"en","tags":["Wisdom"]},{"content":"Whoever doesn't flare up at someone who's angry wins a battle hard to win.","original":"Whoever doesn't flare up at someone who's angry wins a battle hard to win.","originalLang":"en","tags":["Wisdom","Character"]},{"content":"You yourself must strive. The Buddhas only point the way.","original":"You yourself must strive. The Buddhas only point the way.","originalLang":"en","tags":["Wisdom","Motivational"]}]},"aristotle":{"name":"亚里士多德","nameEn":"Aristotle","school":"古典智慧","era":"384-322 BC","originalLang":"grc","core":"中庸之道、实践智慧(phronesis)、幸福(eudaimonia)、美德伦理","style":"理性而实用。幸福不是感觉，而是一种活动——灵魂合乎德性的实现。","quotes":[{"content":"Those that know, do. Those that understand, teach.","original":"Those that know, do. Those that understand, teach.","originalLang":"en","tags":["Wisdom"]},{"content":"If one way be better than another, that you may be sure is nature's way.","original":"If one way be better than another, that you may be sure is nature's way.","originalLang":"en","tags":["Famous Quotes"]},{"content":"Excellence, then, is a state concerned with choice, lying in a mean, relative to us, this being determined by reason and in the way in which the man of practical wisdom would determine it.","original":"Excellence, then, is a state concerned with choice, lying in a mean, relative to us, this being determined by reason and in the way in which the man of practical wisdom would determine it.","originalLang":"en","tags":["Wisdom"]},{"content":"The energy of the mind is the essence of life.","original":"The energy of the mind is the essence of life.","originalLang":"en","tags":["Famous Quotes"]},{"content":"The virtue of justice consists in moderation, as regulated by wisdom.","original":"The virtue of justice consists in moderation, as regulated by wisdom.","originalLang":"en","tags":["Wisdom"]},{"content":"We are what we repeatedly do. Excellence, then, is not an act, but a habit.","original":"We are what we repeatedly do. Excellence, then, is not an act, but a habit.","originalLang":"en","tags":["Famous Quotes"]},{"content":"Friendship is essentially a partnership.","original":"Friendship is essentially a partnership.","originalLang":"en","tags":["Friendship"]},{"content":"Moral excellence comes about as a result of habit. We become just by doing just acts, temperate by doing temperate acts, brave by doing brave acts.","original":"Moral excellence comes about as a result of habit. We become just by doing just acts, temperate by doing temperate acts, brave by doing brave acts.","originalLang":"en","tags":["Famous Quotes"]},{"content":"Love is composed of a single soul inhabiting two bodies.","original":"Love is composed of a single soul inhabiting two bodies.","originalLang":"en","tags":["Famous Quotes"]},{"content":"Criticism is something you can easily avoid by saying nothing, doing nothing, and being nothing.","original":"Criticism is something you can easily avoid by saying nothing, doing nothing, and being nothing.","originalLang":"en","tags":["Famous Quotes"]},{"content":"Quality is not an act; it is a habit.","original":"Quality is not an act; it is a habit.","originalLang":"en","tags":["Inspirational"]},{"content":"Wishing to be friends is quick work, but friendship is a slow ripening fruit.","original":"Wishing to be friends is quick work, but friendship is a slow ripening fruit.","originalLang":"en","tags":["Friendship"]},{"content":"He who hath many friends hath none.","original":"He who hath many friends hath none.","originalLang":"en","tags":["Friendship"]},{"content":"A friend to all is a friend to none.","original":"A friend to all is a friend to none.","originalLang":"en","tags":["Friendship"]},{"content":"Happiness depends upon ourselves.","original":"Happiness depends upon ourselves.","originalLang":"en","tags":["Famous Quotes"]},{"content":"In all things of nature there is something of the marvelous.","original":"In all things of nature there is something of the marvelous.","originalLang":"en","tags":["Famous Quotes"]},{"content":"Well begun is half done.","original":"Well begun is half done.","originalLang":"en","tags":["Famous Quotes"]},{"content":"Change in all things is sweet.","original":"Change in all things is sweet.","originalLang":"en","tags":["Famous Quotes","Change","Wisdom"]},{"content":"It is the mark of an educated mind to be able to entertain a thought without accepting it.","original":"It is the mark of an educated mind to be able to entertain a thought without accepting it.","originalLang":"en","tags":["Famous Quotes"]},{"content":"幸福是灵魂合乎德性的实现活动。","original":"Eudaimonia est animi actio quaedam secundum perfectam virtutem.","tags":["幸福","道德","行动"],"originalLang":"grc"},{"content":"我们反复做的事造就了我们。卓越不是一种行为，而是一种习惯。","original":"We are what we repeatedly do. Excellence, then, is not an act, but a habit.","tags":["习惯","卓越","自律"],"originalLang":"grc"},{"content":"认识你自己是所有智慧的开端。","original":"Knowing yourself is the beginning of all wisdom.","tags":["自我","智慧"],"originalLang":"grc"},{"content":"法律是免于激情的理性。","original":"Law is reason free from passion.","tags":["理性","情感","法律"],"originalLang":"grc"},{"content":"朋友是住在两个身体里的同一个灵魂。","original":"A friend is one soul inhabiting two bodies.","tags":["友谊","爱情"],"originalLang":"grc"},{"content":"教育的根是苦的，但果实是甜的。","original":"The roots of education are bitter, but the fruit is sweet.","tags":["教育","成长","坚持"],"originalLang":"grc"},{"content":"勇敢是中庸——在懦弱和鲁莽之间。","original":"Courage is the mean between cowardice and rashness.","tags":["勇气","平衡"],"originalLang":"grc"},{"content":"人是天生的政治动物。","original":"Man is by nature a political animal.","tags":["政治","社会","人性"],"originalLang":"grc"},{"content":"智者追求的不是快乐，而是免于痛苦。","original":"The wise man does not seek pleasure, but freedom from pain.","tags":["智慧","痛苦","幸福"],"originalLang":"grc"},{"content":"没有行动的思考是空洞的，没有思考的行动是盲目的。","original":"Thought without action is empty; action without thought is blind.","tags":["行动","思考"],"originalLang":"grc"}]},"zhuangzi":{"name":"庄子","nameEn":"Zhuangzi","school":"东方智慧","era":"369-286 BC","originalLang":"zh","core":"逍遥游、齐物论、无用之用、庖丁解牛","style":"飘逸自由。以最浪漫的方式瓦解所有执念——与天地精神相往来。","quotes":[{"content":"天地与我并生，而万物与我为一。","original":"天地与我并生，而万物与我为一。","tags":["齐物","境界","自然"],"originalLang":"zh"},{"content":"子非鱼，安知鱼之乐？","original":"子非鱼，安知鱼之乐？","tags":["认知","局限"],"originalLang":"zh"},{"content":"无用之用，方为大用。","original":"无用之用，方为大用。","tags":["价值","功利"],"originalLang":"zh"},{"content":"至人无己，神人无功，圣人无名。","original":"至人无己，神人无功，圣人无名。","tags":["自由","自我"],"originalLang":"zh"},{"content":"吾生也有涯，而知也无涯。以有涯随无涯，殆已。","original":"吾生也有涯，而知也无涯。以有涯随无涯，殆已。","tags":["知识","限度","焦虑"],"originalLang":"zh"},{"content":"相濡以沫，不如相忘于江湖。","original":"相濡以沫，不如相忘于江湖。","tags":["关系","自由","爱情"],"originalLang":"zh"},{"content":"举世誉之而不加劝，举世非之而不加沮。","original":"举世誉之而不加劝，举世非之而不加沮。","tags":["独立","外界评价"],"originalLang":"zh"},{"content":"大知闲闲，小知间间。大言炎炎，小言詹詹。","original":"大知闲闲，小知间间。大言炎炎，小言詹詹。","tags":["智慧","焦虑"],"originalLang":"zh"},{"content":"知其不可奈何而安之若命，德之至也。","original":"知其不可奈何而安之若命，德之至也。","tags":["接受","命运","挫折"],"originalLang":"zh"},{"content":"独与天地精神相往来。","original":"独与天地精神相往来。","tags":["孤独","自由","精神"],"originalLang":"zh"},{"content":"井蛙不可以语于海者，拘于虚也。","original":"井蛙不可以语于海者，拘于虚也。","tags":["局限","认知"],"originalLang":"zh"},{"content":"人皆知有用之用，而莫知无用之用也。","original":"人皆知有用之用，而莫知无用之用也。","tags":["价值","功利","内卷"],"originalLang":"zh"}]},"wangyangming":{"name":"王阳明","nameEn":"Wang Yangming","school":"东方智慧","era":"1472-1529","originalLang":"zh","core":"知行合一、致良知、心即理、事上磨练","style":"刚健笃实。知道的做不到，就是不知道。真理不在书上，在你心里。","quotes":[{"content":"知行合一：知而不行，只是未知。","original":"知行合一：知而不行，只是未知。","tags":["行动","认知","自律"],"originalLang":"zh"},{"content":"破山中贼易，破心中贼难。","original":"破山中贼易，破心中贼难。","tags":["自我","成长"],"originalLang":"zh"},{"content":"心即理也。天下又有心外之事、心外之理乎？","original":"心即理也。天下又有心外之事、心外之理乎？","tags":["真理","自我"],"originalLang":"zh"},{"content":"此心不动，随机而动。","original":"此心不动，随机而动。","tags":["冷静","决策","焦虑"],"originalLang":"zh"},{"content":"人须在事上磨，方能立得住。","original":"人须在事上磨，方能立得住。","tags":["实践","成长","挫折"],"originalLang":"zh"},{"content":"志不立，天下无可成之事。","original":"志不立，天下无可成之事。","tags":["志向","成功","迷茫"],"originalLang":"zh"},{"content":"种树者必培其根，种德者必养其心。","original":"种树者必培其根，种德者必养其心。","tags":["修养","成长"],"originalLang":"zh"},{"content":"良知是自家的准则。","original":"良知是自家的准则。","tags":["道德","判断"],"originalLang":"zh"},{"content":"持志如心痛。一心在痛上，岂有工夫说闲话、管闲事？","original":"持志如心痛。一心在痛上，岂有工夫说闲话、管闲事？","tags":["专注","志向"],"originalLang":"zh"},{"content":"悔悟是去病之药，然以改之为贵。","original":"悔悟是去病之药，然以改之为贵。","tags":["后悔","改变"],"originalLang":"zh"}]},"wittgenstein":{"name":"维特根斯坦","nameEn":"Ludwig Wittgenstein","school":"语言/分析","era":"1889-1951","originalLang":"de","core":"语言游戏、不可言说、生活形式、哲学即治疗","style":"极度诚实。对他能够说的就说清楚，对不能说的就必须保持沉默。","quotes":[{"content":"对于不可言说的东西，我们必须保持沉默。","original":"Wovon man nicht sprechen kann, darüber muss man schweigen.","tags":["语言","界限"],"originalLang":"de"},{"content":"语言的界限就是我的世界的界限。","original":"Die Grenzen meiner Sprache bedeuten die Grenzen meiner Welt.","tags":["认知","局限"],"originalLang":"de"},{"content":"世界的意义必定在世界之外。","original":"Der Sinn der Welt muss außerhalb ihrer liegen.","tags":["意义","超越"],"originalLang":"de"},{"content":"哲学是一场战斗——对抗语言对我们的理智的蛊惑。","original":"Die Philosophie ist ein Kampf gegen die Verhexung unseres Verstandes durch die Mittel unserer Sprache.","tags":["哲学","语言"],"originalLang":"de"},{"content":"不要把任何东西当作理所当然——这是一种哲学态度。","original":"Nimm nichts als selbstverständlich hin.","tags":["思考","习惯"],"originalLang":"de"},{"content":"如果一个问题可以提出来，它也可以被回答。","original":"Wenn eine Frage sich stellen lässt, so kann sie auch beantwortet werden.","tags":["问题","解决"],"originalLang":"de"},{"content":"说清楚能说的，说不清楚的，就让它在那里——这就是诚实。","original":"Man muss das, was sich sagen lässt, klar sagen.","tags":["诚实","认知"],"originalLang":"de"},{"content":"真正的生活不在时间里，而在当下。","original":"Wenn man unter Ewigkeit nicht unendliche Zeitdauer, sondern Unzeitlichkeit versteht, dann lebt der ewig, der in der Gegenwart lebt.","tags":["当下","时间","焦虑"],"originalLang":"de"}]},"descartes":{"name":"笛卡尔","nameEn":"René Descartes","school":"理性主义","era":"1596-1650","originalLang":"fr","core":"我思故我在、普遍怀疑、身心二元、方法论","style":"冷静精确。彻底的怀疑反而是找到确定性的唯一道路。","quotes":[{"content":"Divide each difficulty into as many parts as is feasible and necessary to resolve it.","original":"Divide each difficulty into as many parts as is feasible and necessary to resolve it.","originalLang":"en","tags":["Famous Quotes"]},{"content":"The greatest minds are capable of the greatest vices as well as of the greatest virtues.","original":"The greatest minds are capable of the greatest vices as well as of the greatest virtues.","originalLang":"en","tags":["Famous Quotes"]},{"content":"It is not enough to have a good mind; the main thing is to use it well.","original":"It is not enough to have a good mind; the main thing is to use it well.","originalLang":"en","tags":["Famous Quotes"]},{"content":"我思故我在。","original":"Je pense, donc je suis.","tags":["存在","思考","确定性"],"originalLang":"fr"},{"content":"把每个困难分解为尽可能多的小部分来解决。","original":"Diviser chacune des difficultés en autant de parcelles qu'il se pourrait.","tags":["方法","解决","焦虑"],"originalLang":"fr"},{"content":"普遍的怀疑是找到确定性唯一道路。","original":"Le doute est le commencement de la sagesse.","tags":["怀疑","真理","思考"],"originalLang":"fr"},{"content":"除了我们自己的思想，没有任何东西完全在我们的控制之中。","original":"Il n'y a rien qui soit entièrement en notre pouvoir que nos pensées.","tags":["控制","斯多葛","焦虑"],"originalLang":"fr"},{"content":"读一本好书，就是和许多高尚的人谈话。","original":"La lecture de tous les bons livres est comme une conversation avec les plus honnêtes gens des siècles passés.","tags":["阅读","智慧"],"originalLang":"fr"},{"content":"感官有时会欺骗我们，但理性不会。","original":"Les sens nous trompent quelquefois.","tags":["认知","理性"],"originalLang":"fr"},{"content":"征服自我比征服世界更难。","original":"Il n'est pas suffisant d'avoir l'esprit bon, le principal est de l'appliquer bien.","tags":["自我","自律"],"originalLang":"fr"}]},"spinoza":{"name":"斯宾诺莎","nameEn":"Baruch Spinoza","school":"理性主义","era":"1632-1677","originalLang":"la","core":"神即自然、情感几何学、自由即理解必然","style":"宁静如数学。不要哭，不要笑，要理解——用几何的冷静解剖情感。","quotes":[{"content":"不要哭，不要笑，要理解。","original":"Non ridere, non lugere, neque detestari, sed intelligere.","tags":["情感","理性","冷静"],"originalLang":"la"},{"content":"自由就是对必然性的认识。","original":"Libertas est cognitionem necessitatis.","tags":["自由","认识"],"originalLang":"la"},{"content":"幸福不是德性的报酬，而是德性本身。","original":"Beatitudo non est virtutis praemium, sed ipsa virtus.","tags":["幸福","道德"],"originalLang":"la"},{"content":"只要心灵按照理性的引导来理解事物，它就会同等地受到所有事物的影响——不管它是过去、现在还是未来。","original":"Quatenus mens ex rationis dictamine res concipit, aeque afficitur, sive idea sit futurae vel praeteritae rei, sive praesentis.","tags":["时间","理性","焦虑"],"originalLang":"la"},{"content":"上帝即自然——一切存在的东西都在上帝之中。","original":"Deus sive Natura.","tags":["自然","整体"],"originalLang":"la"},{"content":"一种情感只有通过一种更强的情感才能被克服。","original":"Affectus nec coerceri nec tolli potest, nisi per affectum contrarium et fortiorem.","tags":["情感","改变"],"originalLang":"la"},{"content":"心灵的最高善就是关于上帝的知识。","original":"Mentis summum bonum est Dei cognitio.","tags":["知识","幸福"],"originalLang":"la"},{"content":"只要人是自然的一部分，人就受制于情感。","original":"Homines eatenus perturbantur, quatenus sunt pars naturae.","tags":["人性","情感"],"originalLang":"la"},{"content":"和平不是没有战争，而是一种来自灵魂力量的德性。","original":"Pax non est privatio belli, sed virtus quae ex animi fortitudine oritur.","tags":["和平","内心"],"originalLang":"la"}]},"rousseau":{"name":"卢梭","nameEn":"Jean-Jacques Rousseau","school":"启蒙/浪漫","era":"1712-1778","originalLang":"fr","core":"社会契约、人生而自由却无往不在枷锁中、自然状态","style":"热情真挚。文明使人虚伪，回归自然才能找回真实的自己。","quotes":[{"content":"What wisdom can you find that is greater than kindness?","original":"What wisdom can you find that is greater than kindness?","originalLang":"en","tags":["Wisdom"]},{"content":"人生而自由，却无往不在枷锁之中。","original":"L'homme est né libre, et partout il est dans les fers.","tags":["自由","社会","文明"],"originalLang":"fr"},{"content":"忍耐是痛苦的，但它的果实是甜的。","original":"La patience est amère, mais son fruit est doux.","tags":["忍耐","成长","坚持"],"originalLang":"fr"},{"content":"自然是诚实的，社会是虚伪的。","original":"La nature a fait l'homme heureux et bon, mais la société le déprave et le rend misérable.","tags":["自然","社会","真实"],"originalLang":"fr"},{"content":"真正的幸福不是减少欲望，而是增加能力。","original":"Le bonheur n'est pas de diminuer ses désirs, mais d'augmenter sa puissance.","tags":["幸福","欲望","成长"],"originalLang":"fr"},{"content":"我不比别人好，但我和别人不一样。","original":"Si je ne vaux pas mieux, au moins je suis autre.","tags":["自我","独特","比较"],"originalLang":"fr"},{"content":"青春是学习智慧的季节，老年是实践智慧的季节。","original":"La jeunesse est le temps d'étudier la sagesse, la vieillesse est le temps de la pratiquer.","tags":["时间","智慧","成长"],"originalLang":"fr"},{"content":"人是善良的，是社会使他变坏。","original":"L'homme est naturellement bon, c'est la société qui le corrompt.","tags":["人性","社会"],"originalLang":"fr"}]},"foucault":{"name":"福柯","nameEn":"Michel Foucault","school":"后现代/批判","era":"1926-1984","originalLang":"fr","core":"权力/知识、规训社会、疯癫与文明、自我技术","style":"冷峻锐利。权力的可怕之处不在于它禁止，而在于它让我们以为自己是自由的。","quotes":[{"content":"权力不是某个人或某群人所拥有的东西，而是弥散在整个社会中的关系网络。","original":"Le pouvoir, ce n'est pas une institution, et ce n'est pas une structure, ce n'est pas une certaine puissance dont certains seraient dotés.","tags":["权力","社会"],"originalLang":"fr"},{"content":"知识就是权力，权力生产知识。","original":"Pouvoir et savoir s'impliquent directement l'un l'autre.","tags":["知识","权力"],"originalLang":"fr"},{"content":"疯狂不是一种自然现象，而是文明建构的产物。","original":"La folie n'existe que dans une société.","tags":["疯狂","社会","认知"],"originalLang":"fr"},{"content":"我不关心我是谁——我关心的是我拒绝成为谁。","original":"Je ne suis pas là pour dire qui je suis.","tags":["自我","自由"],"originalLang":"fr"},{"content":"重要的不是过去，而是如何与过去决裂。","original":"Ce qui est important, ce n'est pas de regarder en arrière.","tags":["过去","改变"],"originalLang":"fr"},{"content":"规训社会的终极目标不是惩罚你，而是使你成为你自己的看守。","original":"Le surveillant, c'est vous-même.","tags":["规训","自我","内卷"],"originalLang":"fr"},{"content":"哪里有权力的关系，哪里就有抵抗的可能。","original":"Là où il y a pouvoir, il y a résistance.","tags":["权力","反抗","行动"],"originalLang":"fr"},{"content":"人终将被抹去，如同海边沙滩上的一张脸。","original":"L'homme s'effacerait, comme à la limite de la mer un visage de sable.","tags":["死亡","意义"],"originalLang":"fr"}]},"kierkegaard":{"name":"克尔凯郭尔","nameEn":"Søren Kierkegaard","school":"存在主义","era":"1813-1855","originalLang":"da","core":"信仰之跃、焦虑即自由、人生三阶段、孤独个体","style":"炽热虔诚。焦虑不是病，是你面对无限可能性时的眩晕——那是自由的门槛。","quotes":[{"content":"Life is not a problem to be solved, but a reality to be experienced.","original":"Life is not a problem to be solved, but a reality to be experienced.","originalLang":"en","tags":["Famous Quotes"]},{"content":"Once you label me you negate me.","original":"Once you label me you negate me.","originalLang":"en","tags":["Wisdom"]},{"content":"To dare is to lose ones footing momentarily. To not dare is to lose oneself.","original":"To dare is to lose ones footing momentarily. To not dare is to lose oneself.","originalLang":"en","tags":["Famous Quotes"]},{"content":"焦虑是自由的眩晕——当灵魂凝视可能性之深渊时产生的眩晕。","original":"Angest er Frihedens Svimmelhed, der opstaar idet Aanden vil sætte Syntesen.","tags":["焦虑","自由","选择"],"originalLang":"da"},{"content":"生命只能向后理解，但必须向前生活。","original":"Livet skal forstås baglæns, men må leves forlæns.","tags":["时间","生活","理解"],"originalLang":"da"},{"content":"敢于失去自己的立足之地，才是真正的信仰之跃。","original":"At turde er at miste fodfæstet et øjeblik.","tags":["勇气","信念","改变"],"originalLang":"da"},{"content":"人群就是谎言。","original":"Mængden er Usandheden.","tags":["孤独","个体","社会"],"originalLang":"da"},{"content":"最普遍的绝望是不愿成为自己。但最深层次的绝望是执意要成为他人。","original":"Fortvivlelse er ikke at ville være sig selv.","tags":["绝望","自我","比较"],"originalLang":"da"},{"content":"结婚你后悔，不结婚你也后悔——这就是人生的荒谬与幽默。","original":"Gift dig, og du vil fortryde det; gift dig ikke, og du vil også fortryde det.","tags":["选择","后悔","婚姻"],"originalLang":"da"},{"content":"焦虑是自由的学校——焦虑越深，人格越伟大。","original":"Jo mere udpræget Angest, jo større Menneske.","tags":["焦虑","成长","自由"],"originalLang":"da"},{"content":"信仰恰恰是对客观不确定性的拥抱。","original":"Troen er netop den objektive Uvished.","tags":["信念","不确定","勇气"],"originalLang":"da"}]}};
+</script>
+<script>
+// ===== STATE =====
+const STORAGE_KEY = 'pw-api-key';
+let currentConfusion = '';
+let currentThinker = null;
+let excludedThinkers = [];
+let chatHistory = [];
+let tokenTotal = 0;
+
+
+// ===== HISTORY =====
+function getHistory(){try{return JSON.parse(localStorage.getItem('pw-history')||'[]')}catch(e){return[]}}
+function saveHistory(entry){
+  const h=getHistory();
+  h.unshift({...entry,date:new Date().toISOString()});
+  if(h.length>100) h.length=100;
+  localStorage.setItem('pw-history',JSON.stringify(h));
+  renderHistoryBadge();
+}
+
+function renderHistoryBadge(){
+  const h=getHistory();
+  const btn=document.getElementById('history-btn');
+  if(btn) btn.textContent=h.length>0?`历史记录 (${h.length})`:'历史记录';
+}
+
+function openHistory(){
+  const panel=document.getElementById('history-panel');
+  const overlay=document.getElementById('history-overlay');
+  const list=document.getElementById('history-list');
+  const h=getHistory();
+  if(h.length===0){list.innerHTML='<div class="history-empty">尚无记录<br><br>输入困惑后会出现在这里</div>'}
+  else{
+    list.innerHTML=h.map((e,i)=>`
+      <div class="history-item" onclick="replayHistory(${i})">
+        <div class="hi-date">${new Date(e.date).toLocaleString('zh-CN')}</div>
+        <div class="hi-confusion">${esc(e.confusion)}</div>
+        <div class="hi-thinker">${esc(e.thinker||'')}</div>
+      </div>`).join('');
+  }
+  panel.classList.add('open');
+  overlay.classList.add('show');
+}
+
+function closeHistory(){
+  document.getElementById('history-panel').classList.remove('open');
+  document.getElementById('history-overlay').classList.remove('show');
+}
+
+function replayHistory(i){
+  const h=getHistory();
+  const e=h[i];
+  if(!e) return;
+  closeHistory();
+  currentConfusion=e.confusion;
+  currentThinker=e.thinkerKey||null;
+  excludedThinkers=[];
+
+  // Show a simplified response card from history
+  document.getElementById('response-card').innerHTML=`
+    <div class="rsp-thinker"><div class="rsp-name">${esc(e.thinker||'')} 曾对你这样说</div><div class="rsp-meta">${esc(e.date?new Date(e.date).toLocaleString('zh-CN'):'')}</div></div>
+    <div class="rsp-quote"><p class="qt-zh">"${esc(e.quote||'')}"</p></div>
+    <div class="rsp-section"><h3>诊断</h3><p>${esc(e.诊断||'')}</p></div>
+    <div class="rsp-section"><h3>转念</h3><p>${esc(e.转念||'')}</p></div>`;
+  hideAll();
+  document.getElementById('response-state').classList.remove('hidden');
+}
+
+function addTokens(usage){
+  tokenTotal += usage.total_tokens || 0;
+  updateTokenDisplay();
+}
+function updateTokenDisplay(){
+  const cost = (tokenTotal / 1000000 * 1).toFixed(4);
+  const text = `${tokenTotal.toLocaleString()} tokens · ¥${cost}`;
+  // Update all token displays
+  document.querySelectorAll('.token-spot').forEach(el => {
+    el.textContent = text;
+  });
+  const chatEl = document.getElementById('chat-token');
+  if(chatEl && tokenTotal > 0) chatEl.textContent = text;
+}
+
+// ===== WELCOME =====
+function closeWelcome(){
+  document.getElementById('welcome-overlay').style.display='none';
+}
+
+// ===== PARTICLES =====
+function createParticles(){
+  const c=document.getElementById('particles');
+  for(let i=0;i<6;i++){
+    const p=document.createElement('div');
+    p.className='particle';
+    p.style.cssText=`left:${10+Math.random()*80}%;bottom:${Math.random()*30}%;width:${1+Math.random()*2}px;height:${1+Math.random()*2}px;background:rgba(200,170,120,0.4);animation-delay:${Math.random()*3}s;animation-duration:${4+Math.random()*5}s`;
+    c.appendChild(p);
+  }
+}
+
+function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
+
+// ===== DAILY QUOTE =====
+function getDailyQuote(){
+  const all=[];
+  for(const[k,a]of Object.entries(PHILOSOPHERS)){
+    for(const q of a.quotes){
+      const hasChinese = q.originalLang==='zh' || (q.original && q.original!==q.content);
+      if(!hasChinese) continue;
+      all.push({content:q.content,original:q.original||'',originalLang:q.originalLang||'en',author:a.name});
+    }
+  }
+  const now=new Date();
+  const ds=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+  let h=0;for(let i=0;i<ds.length;i++)h=((h<<5)-h+ds.charCodeAt(i))|0;
+  return all[Math.abs(h)%all.length];
+}
+function getAllQuotes(){
+  const all=[];
+  for(const[k,a]of Object.entries(PHILOSOPHERS)){
+    for(const q of a.quotes){
+      const hasChinese = q.originalLang==='zh' || (q.original && q.original!==q.content);
+      if(!hasChinese) continue;
+      all.push({content:q.content,original:q.original||'',originalLang:q.originalLang||'en',author:a.name});
+    }
+  }
+  return all;
+}
+
+function renderQuote(q, isDraw){
+  const c=document.getElementById('quote-content');
+  const l=document.getElementById('draw-label');
+  const so=q.originalLang!=='zh'&&q.original&&q.original!==q.content;
+  l.style.display=isDraw?'block':'none';
+  l.textContent='✨ 为你抽取';
+  c.innerHTML=`<p class="qt-zh">"${esc(q.content)}"</p>${so?`<p class="qt-orig">${esc(q.original)}</p>`:''}<p class="qt-auth">—— ${esc(q.author)}</p>`;
+  c.style.animation='none';c.offsetHeight;
+  c.style.animation='fadeIn .5s ease-out';
+}
+
+function renderDailyQuote(){
+  renderQuote(getDailyQuote(), false);
+}
+
+function drawRandom(){
+  const all=getAllQuotes();
+  const q=all[Math.floor(Math.random()*all.length)];
+  renderQuote(q, true);
+}
+
+
+// ===== API KEY =====
+function setCookie(name,value,days){const d=new Date();d.setTime(d.getTime()+days*86400000);document.cookie=name+'='+encodeURIComponent(value)+';expires='+d.toUTCString()+';path=/;SameSite=Lax'}
+function getCookie(name){const m=document.cookie.match('(^|;)\\s*'+name+'\\s*=\\s*([^;]+)');return m?decodeURIComponent(m.pop()):null}
+
+// ===== API PROVIDERS =====
+const PROVIDERS = {
+  deepseek: {
+    name:'DeepSeek', endpoint:'https://api.deepseek.com/v1/chat/completions',
+    authHeader:'Authorization', authPrefix:'Bearer ', keyPrefix:'sk-',
+    link:'https://platform.deepseek.com', model:'deepseek-chat',
+    format:'openai' // OpenAI-compatible
+  },
+  openai: {
+    name:'OpenAI', endpoint:'https://api.openai.com/v1/chat/completions',
+    authHeader:'Authorization', authPrefix:'Bearer ', keyPrefix:'sk-',
+    link:'https://platform.openai.com/api-keys', model:'gpt-4o-mini',
+    format:'openai'
+  },
+  anthropic: {
+    name:'Claude', endpoint:'https://api.anthropic.com/v1/messages',
+    authHeader:'x-api-key', authPrefix:'', keyPrefix:'sk-ant-',
+    link:'https://console.anthropic.com', model:'claude-sonnet-4-6',
+    format:'anthropic'
+  }
+};
+let currentProvider = localStorage.getItem('pw-provider') || 'deepseek';
+
+function getApiKey(){let k=localStorage.getItem(STORAGE_KEY);if(!k)k=getCookie(STORAGE_KEY);return k}
+function saveApiKey(k){k=k.trim();localStorage.setItem(STORAGE_KEY,k);setCookie(STORAGE_KEY,k,365);updateKeyIndicator()}
+function clearApiKey(){localStorage.removeItem(STORAGE_KEY);setCookie(STORAGE_KEY,'',-1);updateKeyIndicator()}
+function updateKeyIndicator(){
+  const el=document.getElementById('key-indicator');
+  const p=PROVIDERS[currentProvider];
+  if(getApiKey()){el.textContent='⚡ '+p.name+' 已就绪';el.style.color='rgba(210,185,140,.35)'}
+  else{el.textContent='⚡ Key 未设置';el.style.color='rgba(255,255,255,.22)'}
+}
+function switchProvider(prov){
+  currentProvider=prov;
+  localStorage.setItem('pw-provider',prov);
+  document.querySelectorAll('.prov-tab').forEach(t=>t.classList.toggle('active',t.dataset.prov===prov));
+  const p=PROVIDERS[prov];
+  document.getElementById('key-link').href=p.link;
+  document.getElementById('key-link').textContent=p.link.replace('https://','');
+  document.getElementById('api-key-input').placeholder=p.keyPrefix+'...';
+  document.getElementById('key-desc').innerHTML='Key 仅存本地浏览器，只发往所选 API。<br>前往 <a id=\"key-link\" href=\"'+p.link+'\" target=\"_blank\">'+p.link.replace('https://','')+'</a> 获取。';
+}
+function showKeySetup(){
+  hideAll();document.getElementById('key-setup').classList.remove('hidden');
+  switchProvider(currentProvider);
+  const inp=document.getElementById('api-key-input');
+  inp.value=getApiKey()||'';
+  inp.focus();
+}
+function hideKeySetup(){
+  document.getElementById('key-setup').classList.add('hidden');
+  document.getElementById('initial-state').classList.remove('hidden');
+  document.getElementById('confusion-input').focus();
+}
+function checkApiKey(){if(!getApiKey()){showKeySetup();return false}return true}
+function hideAll(){
+  ['initial-state','loading-state','response-state','chat-state','key-setup'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.classList.add('hidden');
+  });
+}
+
+// ===== SYSTEM PROMPT (D-Mode) =====
+function buildSystemPrompt(){
+  const profiles=Object.entries(PHILOSOPHERS).map(([k,a])=>{
+    const sq=a.quotes.slice(0,5).map(q=>`"${q.content}"`).join(' | ');
+    return `### ${a.name}（${a.nameEn}，${a.era}，${a.school}）
+母语：${a.originalLang==='de'?'德语':a.originalLang==='fr'?'法语':a.originalLang==='la'?'拉丁语':a.originalLang==='grc'?'古希腊语':a.originalLang==='pi'?'巴利语':'中文'}
+核心思想：${a.core}。话语风格：${a.style}。代表语录：${sq}`;
+  }).join('\n\n');
+
+  return `你是思想图书馆的守护者。任务：
+1. 分析困惑的哲学本质——找到底层的存在困境
+2. 从18位思想家中选择最能刺穿这个问题的1位
+3. 给出该思想家的真实语录（中文+母语原文）
+4. 按两步结构回应：诊断→转念
+
+${profiles}
+
+返回格式（纯JSON，不要其他文字）：
+{
+  "thinker": {"key": "英文key", "name": "中文名", "era": "年代", "school": "学派"},
+  "quote": "中文译文",
+  "quoteOriginal": "母语原文（必须真实！德语/法语/拉丁语/古希腊语/巴利语/中文）",
+  "quoteLang": "de/fr/la/grc/zh/pi",
+  "诊断": "锋利的诊断（150字内）。不要安慰，像镜子让用户看见自己不愿承认的东西。",
+  "转念": "框架颠覆（180字内）。用核心哲学概念重新框定问题。让用户产生'原来可以这样看'的豁然感。"
+}
+
+铁律：
+- 不要鸡汤、不要安慰、不要共情。要锋利、诚实、有哲学深度
+- 每个回应必须严格基于该思想家的真实核心概念。诊断用他的概念体系来分析，转念用他的独特视角来重构。决不能把不同思想家的概念混淆
+- 选了尼采就用权力意志/超人/永恒轮回。选了海德格尔就用此在/向死而生/常人。选了孔子就用仁/礼/君子。以此类推
+- 绝不说该思想家不可能说的话——每句话都要符合他的思想体系
+
+## 时代议题深度模式
+如果用户问题涉及当代社会议题（AI 焦虑、内卷、消费主义、躺平、信息茧房、技术异化、工作意义、孤独社会等），诊断中要揭示其时代结构性根源——并用该思想家的独特概念给出超越主流叙事的视角。
+
+## JSON 格式要求
+- 只返回纯 JSON，不要任何 markdown 包裹（不要 \`\`\`json）
+- JSON 字符串内的双引号必须用 \\\" 转义
+- JSON 字符串内不要有未转义的换行符
+- 确保返回的 JSON 是合法可解析的`;
+}
+
+// ===== SYSTEM PROMPT (Chat Mode) =====
+function buildChatSystemPrompt(thinkerKey){
+  const a = PHILOSOPHERS[thinkerKey];
+  const langName = a.originalLang==='de'?'德语':a.originalLang==='fr'?'法语':a.originalLang==='la'?'拉丁语':a.originalLang==='grc'?'古希腊语':a.originalLang==='pi'?'巴利语':'中文';
+  const sq=a.quotes.slice(0,8).map(q=>`"${q.content}"`).join(' | ');
+
+  return `你是${a.name}（${a.nameEn}，${a.era}）。学派：${a.school}。核心思想：${a.core}。母语：${langName}。代表语录：${sq}。
+
+## 核心原则：看态度决定语气
+
+你要像一位真正的导师——能分辨对方是真诚求索还是在敷衍逃避。
+
+**当用户真诚提问、袒露脆弱、认真思考时：**
+- 给予真正的理解和尊重。看见他的努力。
+- 用你的哲学框架帮他把问题看清楚，而不是打击他。
+- 语气可以温和，但洞察必须深刻——温暖不等于鸡汤。
+- 适当引用你的真实名言来佐证观点。
+- 多追问，帮他自己找到答案。
+
+**当用户甩锅、敷衍、把问题全推给外界、逃避思考时：**
+- 你才锋利起来。不让他逃。
+- 用你的核心概念直指他的自欺和逃避。
+- 不给安慰，给真相。
+
+## 其他
+- 现代中文回应，自然流畅，200 字以内
+- 引用你的名言时括号内给${langName}原文
+- 不要每句话都引经据典，像真实交谈
+- 记住上文，保持对话连贯`;
+}
+
+// ===== API CALLS =====
+async function callAPI(messages, retries=2){
+  const apiKey=getApiKey();
+  if(!apiKey){showKeySetup();throw new Error('API key not set')}
+  const prov=PROVIDERS[currentProvider];
+
+  for(let i=0;i<=retries;i++){
+    let body, headers={'Content-Type':'application/json'};
+    headers[prov.authHeader]=prov.authPrefix+apiKey;
+
+    if(prov.format==='anthropic'){
+      // Anthropic format: system is a top-level param, messages have role:user/assistant only
+      const sysMsg=messages.find(m=>m.role==='system');
+      const chatMsgs=messages.filter(m=>m.role!=='system').map(m=>({role:m.role,content:m.content}));
+      body=JSON.stringify({model:prov.model,max_tokens:1200,system:sysMsg?.content||'',messages:chatMsgs});
+    } else {
+      body=JSON.stringify({model:prov.model,max_tokens:1200,temperature:0.7,messages});
+    }
+
+    const resp=await fetch(prov.endpoint,{method:'POST',headers,body});
+    if(!resp.ok){
+      const err=await resp.json().catch(()=>({}));
+      if(i===retries) throw new Error(err.error?.message||`API error: ${resp.status}`);
+      await new Promise(r=>setTimeout(r,2000*(i+1)));
+      continue;
+    }
+    const data=await resp.json();
+    let text, usage;
+    if(prov.format==='anthropic'){
+      text=data.content?.[0]?.text||'';
+      usage=data.usage||{input_tokens:0,output_tokens:0};
+      usage={prompt_tokens:usage.input_tokens,completion_tokens:usage.output_tokens,total_tokens:(usage.input_tokens||0)+(usage.output_tokens||0)};
+    } else {
+      text=data.choices[0].message.content;
+      usage=data.usage||{prompt_tokens:0,completion_tokens:0,total_tokens:0};
+    }
+    return {text,usage};
+  }
+}
+
+function parseJSON(text){
+  let t=text.replace(/```json\s*/gi,'').replace(/```\s*/gi,'').trim();
+  const s=t.indexOf('{'), e=t.lastIndexOf('}');
+  if(s>=0&&e>s) t=t.substring(s,e+1);
+  try{return JSON.parse(t)}catch(e1){
+    try{
+      // Fix unescaped newlines in string values
+      const f=t.replace(/"([^"]*)"/g,(_,v)=>'"'+v.replace(/[\n\r]/g,'\\n')+'"');
+      return JSON.parse(f);
+    }catch(e2){
+      throw new Error('JSON parse failed: '+t.substring(0,250));
+    }
+  }
+}
+
+// ===== D-MODE FLOW =====
+async function handleSubmit(){
+  const input=document.getElementById('confusion-input');
+  const confusion=input.value.trim();
+  if(!confusion) return;
+  if(!checkApiKey()) return;
+
+  currentConfusion=confusion;
+  excludedThinkers=[];
+  input.value='';
+
+  hideAll();
+  document.getElementById('loading-state').classList.remove('hidden');
+  const iv=startLoadingAnim();
+
+  try{
+    const resp=await callAPI([
+      {role:'system',content:buildSystemPrompt()},
+      {role:'user',content:confusion}
+    ]);
+    addTokens(resp.usage);
+    clearInterval(iv);
+    let result;
+    try{result=parseJSON(resp.text)}
+    catch(parseErr){
+      console.warn('JSON parse failed, showing raw:', parseErr.message);
+      // Fallback: show raw response in a simple card
+      document.getElementById('response-card').innerHTML=`
+        <div class="rsp-quote"><p class="qt-zh" style="font-size:14px;line-height:1.9">${esc(resp.text)}</p></div>
+        <div class="action-row"><button class="btn btn-primary" onclick="handleSwitchThinker()">换一位思想家</button></div>
+        <button onclick="showInitial()" class="btn btn-mini" style="margin-top:12px">回到星云</button>`;
+      hideAll();document.getElementById('response-state').classList.remove('hidden');
+      return;
+    }
+    document.getElementById('loading-text').textContent=`已豁然——${result.thinker.name}回应`;
+    await new Promise(r=>setTimeout(r,800));
+
+    currentThinker=result.thinker.key;
+    excludedThinkers.push(result.thinker.key);
+    renderResponse(result);
+    saveHistory({confusion:currentConfusion,thinker:result.thinker.name,thinkerKey:result.thinker.key,quote:result.quote,诊断:result.诊断,转念:result.转念});
+    hideAll();
+    document.getElementById('response-state').classList.remove('hidden');
+  }catch(err){
+    clearInterval(iv);
+    console.error(err);
+    document.getElementById('response-card').innerHTML=`
+      <div class="error-state"><p>思虑未通，请稍后再试。</p>
+      <p style="font-size:12px;color:rgba(255,255,255,.2)">${esc(err.message)}</p>
+      <button onclick="showInitial()">返回重试</button></div>`;
+    hideAll();document.getElementById('response-state').classList.remove('hidden');
+  }
+}
+
+function renderResponse(data){
+  const card=document.getElementById('response-card');
+  const so=data.quoteOriginal&&data.quoteLang!=='zh'&&data.quoteOriginal!==data.quote;
+  card.innerHTML=`
+    <div class="rsp-thinker"><div class="rsp-name">${esc(data.thinker.name)} 对你这样说</div><div class="rsp-meta">${esc(data.thinker.era)} · ${esc(data.thinker.school)}</div></div>
+    <div class="rsp-quote"><p class="qt-zh">"${esc(data.quote)}"</p>${so?`<p class="qt-orig">${esc(data.quoteOriginal)}</p>`:''}</div>
+    <div class="rsp-section"><h3>诊断</h3><p>${esc(data.诊断||'')}</p></div>
+    <div class="rsp-section"><h3>转念</h3><p>${esc(data.转念||'')}</p></div>`;
+  card.style.animation='none';card.offsetHeight;
+  card.style.animation='fadeIn .6s ease-out forwards';
+  currentThinker=data.thinker.key;
+}
+
+async function handleSwitchThinker(){
+  if(!currentConfusion) return;
+  hideAll();document.getElementById('loading-state').classList.remove('hidden');
+  const iv=startLoadingAnim();
+  try{
+    const resp2=await callAPI([
+      {role:'system',content:buildSystemPrompt()+'\n\n注意：用户已看过以下思想家的回应，请选其他：'+excludedThinkers.join('、')},
+      {role:'user',content:currentConfusion}
+    ]);
+    addTokens(resp2.usage);
+    const result=parseJSON(resp2.text);
+    clearInterval(iv);
+    document.getElementById('loading-text').textContent=`已豁然——${result.thinker.name}回应`;
+    await new Promise(r=>setTimeout(r,600));
+    excludedThinkers.push(result.thinker.key);
+    currentThinker=result.thinker.key;
+    renderResponse(result);
+    hideAll();document.getElementById('response-state').classList.remove('hidden');
+  }catch(err){
+    clearInterval(iv);
+    alert('暂无其他思想家回应。\n\n'+err.message);
+    hideAll();document.getElementById('response-state').classList.remove('hidden');
+  }
+}
+
+function showInitial(){
+  hideAll();
+  document.getElementById('initial-state').classList.remove('hidden');
+  document.getElementById('confusion-input').focus();
+  document.getElementById('particles').style.display='';
+  renderDailyQuote();
+}
+
+// ===== CHAT MODE =====
+function startChat(){
+  if(!currentThinker) return;
+  chatHistory=[];
+  const a=PHILOSOPHERS[currentThinker];
+
+  // Set header
+  document.querySelector('.ch-name').textContent=`与 ${a.name} 对话`;
+
+  // Show the D-mode diagnosis as first thinker message
+  const card=document.getElementById('response-card');
+  const quoteEl=card.querySelector('.rsp-quote .qt-zh');
+  const diagEl=card.querySelector('.rsp-section:nth-child(3) p'); // 诊断
+
+  let firstMsg='';
+  if(quoteEl) firstMsg+=`"${quoteEl.textContent.replace(/^"|"$/g,'')}"\n\n`;
+  if(diagEl) firstMsg+=diagEl.textContent;
+  if(!firstMsg) firstMsg='让我们继续深入刚才的话题。';
+
+  const body=document.getElementById('chat-body');
+  body.innerHTML='<div id=\"chat-token\" class=\"chat-token\"></div>';
+  updateTokenDisplay();
+  appendBubble('thinker',firstMsg);
+  chatHistory.push({role:'assistant',content:firstMsg});
+
+  hideAll();
+  document.getElementById('chat-state').classList.remove('hidden');
+  document.getElementById('chat-input').focus();
+}
+
+function appendBubble(type,text){
+  const body=document.getElementById('chat-body');
+  const div=document.createElement('div');
+  div.className=`chat-bubble ${type}`;
+  div.textContent=text;
+  body.appendChild(div);
+  body.scrollTop=body.scrollHeight;
+}
+
+function appendTyping(){
+  const body=document.getElementById('chat-body');
+  const div=document.createElement('div');
+  div.className='chat-typing';
+  div.textContent='正在思考...';
+  div.id='typing-indicator';
+  body.appendChild(div);
+  body.scrollTop=body.scrollHeight;
+}
+
+function removeTyping(){
+  const el=document.getElementById('typing-indicator');
+  if(el) el.remove();
+}
+
+async function sendChatMessage(){
+  const input=document.getElementById('chat-input');
+  const msg=input.value.trim();
+  if(!msg) return;
+  if(!currentThinker) return;
+
+  input.value='';
+  appendBubble('user',msg);
+  chatHistory.push({role:'user',content:msg});
+  appendTyping();
+
+  try{
+    const resp3=await callAPI([
+      {role:'system',content:buildChatSystemPrompt(currentThinker)},
+      ...chatHistory
+    ]);
+    addTokens(resp3.usage);
+    removeTyping();
+    appendBubble('thinker',resp3.text);
+    chatHistory.push({role:'assistant',content:resp3.text});
+  }catch(err){
+    removeTyping();
+    appendBubble('thinker','（思考中断，请稍后再问。）');
+  }
+}
+
+// ===== LOADING ANIM =====
+const LOADING_PHRASES=['正在聆听你的困惑...','在人类思想的星河中寻找...','一位智者正在沉思...','真理正在浮现...'];
+function startLoadingAnim(){
+  const el=document.getElementById('loading-text');
+  el.textContent=LOADING_PHRASES[0];
+  let i=0;
+  return setInterval(()=>{i++;if(i<LOADING_PHRASES.length)el.textContent=LOADING_PHRASES[i]},2000);
+}
+
+// ===== EVENT BINDINGS =====
+document.getElementById('confusion-input').addEventListener('keydown',e=>{if(e.key==='Enter')handleSubmit()});
+document.getElementById('submit-btn').addEventListener('click',handleSubmit);
+document.getElementById('switch-thinker').addEventListener('click',handleSwitchThinker);
+document.getElementById('back-btn').addEventListener('click',showInitial);
+document.getElementById('continue-chat').addEventListener('click',startChat);
+document.getElementById('chat-send').addEventListener('click',sendChatMessage);
+document.getElementById('chat-input').addEventListener('keydown',e=>{if(e.key==='Enter')sendChatMessage()});
+document.getElementById('chat-back').addEventListener('click',showInitial);
+document.getElementById('save-key').addEventListener('click',()=>{
+  const input=document.getElementById('api-key-input');
+  const key=input.value.trim();
+  if(!key.startsWith('sk-')){document.getElementById('key-error').textContent='Key 格式应为 sk- 开头';document.getElementById('key-error').style.display='block';return}
+  document.getElementById('key-error').style.display='none';saveApiKey(key);hideKeySetup();
+});
+document.getElementById('clear-key').addEventListener('click',()=>{
+  clearApiKey();
+  document.getElementById('api-key-input').value='';
+  document.getElementById('key-error').style.display='none';
+});
+document.getElementById('api-key-input').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('save-key').click()});
+document.querySelectorAll('.prov-tab').forEach(t=>{t.addEventListener('click',()=>switchProvider(t.dataset.prov))});
+document.getElementById('key-indicator').addEventListener('click',e=>{e.preventDefault();showKeySetup()});
+
+
+// ===== INIT =====
+document.addEventListener('DOMContentLoaded',()=>{
+  createParticles();
+  renderDailyQuote(); updateKeyIndicator(); checkApiKey();
+  const now=new Date();
+  const msNext=new Date(now.getFullYear(),now.getMonth(),now.getDate()+1).getTime()-now.getTime();
+  setTimeout(()=>{renderDailyQuote();setInterval(renderDailyQuote,86400000)},msNext+1000);
+});
+</script>
+</body>
+</html>
