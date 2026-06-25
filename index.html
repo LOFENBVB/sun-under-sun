@@ -606,11 +606,12 @@ function hideAll(){
 // ===== SYSTEM PROMPT (D-Mode) =====
 function buildSystemPrompt(){
   const profiles=Object.entries(PHILOSOPHERS).map(([k,a])=>{
-    const sq=a.quotes.slice(0,5).map(q=>`"${q.content}"`).join(' | ');
-    return `### ${a.name}（${a.nameEn}，${a.era}，${a.school}）
-母语：${a.originalLang==='de'?'德语':a.originalLang==='fr'?'法语':a.originalLang==='la'?'拉丁语':a.originalLang==='grc'?'古希腊语':a.originalLang==='pi'?'巴利语':'中文'}
-核心思想：${a.core}。话语风格：${a.style}。代表语录：${sq}`;
-  }).join('\n\n');
+    const lang=a.originalLang==='de'?'德':a.originalLang==='fr'?'法':a.originalLang==='la':'拉':a.originalLang==='grc'?'古希腊':a.originalLang==='pi'?'巴利':'中';
+    const sq=a.quotes.slice(0,3).map(q=>`"${q.content}"`).join(' | ');
+    const works=a.works?`｜著作：${a.works}`:'';
+    const method=a.method?`｜分析方式：${a.method}`:'';
+    return `${a.name}（${a.nameEn} ${a.era} ${a.school}）${lang}语。${a.core}。${a.style}${works}${method}。语录：${sq}`;
+  }).join('\n');
 
   return `你是一座思想图书馆。用户带着困惑来寻求哲学的理解。
 
