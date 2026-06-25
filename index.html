@@ -51,6 +51,9 @@ body::before{
 #daily-quote .qt-zh{font-size:15px;color:rgba(210,190,160,.5);font-style:italic;line-height:1.8}
 #daily-quote .qt-orig{font-size:11px;color:rgba(210,190,160,.28);font-style:italic;line-height:1.6;margin-top:4px}
 #daily-quote .qt-auth{font-size:12px;color:rgba(210,190,160,.3);margin-top:8px}
+#draw-btn{display:inline-block;margin-top:10px;font-size:11px;color:rgba(210,185,140,.2);cursor:pointer;background:none;border:none;font-family:var(--font);transition:all .3s}
+#draw-btn:hover{color:var(--gold-dim)}
+#draw-label{font-size:10px;color:rgba(210,185,140,.18);margin-bottom:4px;display:none}
 #input-wrap{position:relative;width:420px;max-width:90vw}
 .input-row{display:flex;gap:10px;align-items:center}
 #confusion-input{flex:1;padding:18px 24px;background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:12px;color:var(--text);font-size:15px;font-family:var(--font);outline:none;transition:all .4s}
@@ -253,7 +256,11 @@ footer a:hover{color:rgba(255,255,255,.4)}
   <div id="initial-state" class="page">
     <div id="orb"></div>
     <div class="sect-title">太 阳 底 下 无 新 事</div>    <button id="history-btn" onclick="openHistory()">历史记录</button>
-    <div id="daily-quote"></div>
+    <div id="daily-quote">
+      <div id="draw-label"></div>
+      <div id="quote-content"></div>
+    </div>
+    <button id="draw-btn" onclick="drawRandom()">✨ 抽一张</button>
     <div id="input-wrap">
       <div class="input-row">
         <input id="confusion-input" type="text" placeholder="输入你的困惑..." autofocus>
@@ -470,11 +477,37 @@ function getDailyQuote(){
   let h=0;for(let i=0;i<ds.length;i++)h=((h<<5)-h+ds.charCodeAt(i))|0;
   return all[Math.abs(h)%all.length];
 }
-function renderDailyQuote(){
-  const q=getDailyQuote();
-  const c=document.getElementById('daily-quote');
+function getAllQuotes(){
+  const all=[];
+  for(const[k,a]of Object.entries(PHILOSOPHERS)){
+    for(const q of a.quotes){
+      const hasChinese = q.originalLang==='zh' || (q.original && q.original!==q.content);
+      if(!hasChinese) continue;
+      all.push({content:q.content,original:q.original||'',originalLang:q.originalLang||'en',author:a.name});
+    }
+  }
+  return all;
+}
+
+function renderQuote(q, isDraw){
+  const c=document.getElementById('quote-content');
+  const l=document.getElementById('draw-label');
   const so=q.originalLang!=='zh'&&q.original&&q.original!==q.content;
+  l.style.display=isDraw?'block':'none';
+  l.textContent='✨ 为你抽取';
   c.innerHTML=`<p class="qt-zh">"${esc(q.content)}"</p>${so?`<p class="qt-orig">${esc(q.original)}</p>`:''}<p class="qt-auth">—— ${esc(q.author)}</p>`;
+  c.style.animation='none';c.offsetHeight;
+  c.style.animation='fadeIn .5s ease-out';
+}
+
+function renderDailyQuote(){
+  renderQuote(getDailyQuote(), false);
+}
+
+function drawRandom(){
+  const all=getAllQuotes();
+  const q=all[Math.floor(Math.random()*all.length)];
+  renderQuote(q, true);
 }
 
 // ===== API KEY =====
