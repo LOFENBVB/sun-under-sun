@@ -67,6 +67,11 @@ body::before{
 }
 .submit-btn:hover{background:rgba(210,185,140,.15);border-color:rgba(210,185,140,.4);color:var(--gold)}
 #input-hint{margin-top:14px;font-size:12px;color:var(--text-hint);text-align:center}
+#trending-topics{margin-top:28px;text-align:center}
+.trending-label{font-size:10px;color:rgba(255,255,255,.12);letter-spacing:3px;margin-bottom:12px}
+.trending-chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-width:440px}
+.trending-chip{padding:8px 16px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:20px;color:rgba(255,255,255,.35);font-family:var(--font);font-size:12px;cursor:pointer;transition:all .3s}
+.trending-chip:hover{background:rgba(210,185,140,.06);border-color:rgba(210,185,140,.2);color:var(--gold-dim)}
 
 /* ===== LOADING ===== */
 #loading-orb{width:60px;height:60px;border-radius:50%;background:radial-gradient(circle,rgba(200,170,120,.15) 0%,transparent 70%);animation:loadBreathe 1.5s ease-in-out infinite;margin-bottom:32px}
@@ -274,6 +279,10 @@ footer a:hover{color:rgba(255,255,255,.4)}
         <button id="submit-btn" class="submit-btn">→</button>
       </div>
       <div id="input-hint">按下回车或点击箭头</div>
+    </div>
+    <div id="trending-topics">
+      <p class="trending-label">时代热议</p>
+      <div class="trending-chips" id="trending-chips"></div>
     </div>
   </div>
 
@@ -521,6 +530,28 @@ function drawRandom(){
   const all=getAllQuotes();
   const q=all[Math.floor(Math.random()*all.length)];
   renderQuote(q, true);
+}
+
+// ===== TRENDING TOPICS =====
+const TRENDING_TOPICS = [
+  {label:'AI 焦虑',q:'AI 会取代我的工作吗？人类的价值在哪里？'},
+  {label:'内卷困境',q:'拼命努力却感觉在原地踏步，内卷有尽头吗？'},
+  {label:'躺平与奋斗',q:'选择躺平是清醒还是逃避？奋斗的意义是什么？'},
+  {label:'消费主义',q:'为什么买了更多东西却感觉更空虚？'},
+  {label:'孤独社会',q:'城市里人越来越多，为什么越来越孤独？'},
+  {label:'信息茧房',q:'算法推送让我越来越偏激，如何突破认知牢笼？'},
+  {label:'生育焦虑',q:'生孩子是义务、权利还是负担？'},
+  {label:'工作意义',q:'如果工作只是为了生存，这辈子算不算白活？'}
+];
+
+function renderTrendingTopics(){
+  const c=document.getElementById('trending-chips');
+  c.innerHTML=TRENDING_TOPICS.map(t=>`<span class="trending-chip" onclick="askTrending('${esc(t.q).replace(/'/g,"\\'")}')">${t.label}</span>`).join('');
+}
+
+function askTrending(question){
+  document.getElementById('confusion-input').value=question;
+  handleSubmit();
 }
 
 // ===== API KEY =====
@@ -927,7 +958,7 @@ document.getElementById('key-indicator').addEventListener('click',e=>{e.preventD
 // ===== INIT =====
 document.addEventListener('DOMContentLoaded',()=>{
   createParticles();
-  renderDailyQuote(); updateKeyIndicator(); checkApiKey();
+  renderDailyQuote(); renderTrendingTopics(); updateKeyIndicator(); checkApiKey();
   const now=new Date();
   const msNext=new Date(now.getFullYear(),now.getMonth(),now.getDate()+1).getTime()-now.getTime();
   setTimeout(()=>{renderDailyQuote();setInterval(renderDailyQuote,86400000)},msNext+1000);
